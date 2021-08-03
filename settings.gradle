@@ -1,0 +1,4 @@
+rootProject.name = "BlogApp"
+include ':app'
+include ':data'
+include ':domain'
