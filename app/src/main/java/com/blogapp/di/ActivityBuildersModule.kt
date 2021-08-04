@@ -2,9 +2,9 @@ package com.blogapp.di
 
 import com.blogapp.ui.auth.AuthActivity
 import com.blogapp.di.auth.AuthFragmentBuildersModule
-import com.blogapp.di.auth.AuthModule
-import com.blogapp.di.auth.AuthScope
 import com.blogapp.di.auth.AuthViewModelModule
+import com.data.di.auth.AuthModule
+import com.data.di.auth.AuthScope
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
 

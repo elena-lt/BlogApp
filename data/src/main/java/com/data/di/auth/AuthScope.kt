@@ -1,4 +1,4 @@
-package com.blogapp.di.auth
+package com.data.di.auth
 
 import javax.inject.Scope
 

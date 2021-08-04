@@ -2,6 +2,7 @@ package com.blogapp.di
 
 import android.app.Application
 import com.blogapp.BaseApplication
+import com.data.di.RepositoryModule
 import com.data.session.SessionManager
 import dagger.BindsInstance
 import dagger.Component
@@ -14,6 +15,7 @@ import javax.inject.Singleton
     modules = [
         AndroidInjectionModule::class,
         AppModule::class,
+        RepositoryModule::class,
         ActivityBuildersModule::class,
         ViewModelFactoryModule::class
     ]
