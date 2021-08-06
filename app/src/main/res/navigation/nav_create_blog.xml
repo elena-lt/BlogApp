@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_create_blog"
+    app:startDestination="@id/createNewBlogFragment">
+
+    <fragment
+        android:id="@+id/createNewBlogFragment"
+        android:name="com.blogapp.ui.main.createPost.CreateNewBlogFragment"
+        android:label="fragment_create_new_blog"
+        tools:layout="@layout/fragment_create_new_blog" />
+</navigation>

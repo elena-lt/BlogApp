@@ -9,7 +9,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.blogapp.R
-import com.blogapp.ui.BaseActivity
+import com.blogapp.ui.base.BaseActivity
 import com.blogapp.ui.ViewModelProviderFactory
 import com.blogapp.ui.auth.state.AuthStateEvent
 import com.blogapp.ui.main.MainActivity

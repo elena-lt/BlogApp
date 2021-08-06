@@ -1,7 +1,6 @@
 package com.blogapp.ui.auth
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import androidx.navigation.fragment.findNavController
@@ -9,6 +8,7 @@ import androidx.viewbinding.ViewBinding
 import com.blogapp.R
 import com.blogapp.databinding.FragmentLoginBinding
 import com.blogapp.ui.auth.state.AuthStateEvent
+import com.blogapp.ui.base.BaseAuthFragment
 import com.domain.viewState.LoginFields
 
 class LoginFragment : BaseAuthFragment<FragmentLoginBinding>() {

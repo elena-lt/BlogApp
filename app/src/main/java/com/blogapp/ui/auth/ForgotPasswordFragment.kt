@@ -14,6 +14,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.viewbinding.ViewBinding
 import com.blogapp.databinding.FragmentForgotPasswordBinding
 import com.blogapp.ui.DataStateChangeListener
+import com.blogapp.ui.base.BaseAuthFragment
 import com.blogapp.utils.Const.PASSWORD_RESET_URL
 import com.domain.utils.DataState
 import com.domain.utils.Response

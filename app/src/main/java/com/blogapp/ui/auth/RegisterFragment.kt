@@ -1,12 +1,12 @@
 package com.blogapp.ui.auth
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import androidx.viewbinding.ViewBinding
 import com.blogapp.databinding.FragmentRegisterBinding
 import com.blogapp.ui.auth.state.AuthStateEvent
+import com.blogapp.ui.base.BaseAuthFragment
 import com.domain.viewState.RegistrationFields
 
 class RegisterFragment : BaseAuthFragment<FragmentRegisterBinding>() {

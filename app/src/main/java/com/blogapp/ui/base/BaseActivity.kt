@@ -1,6 +1,9 @@
-package com.blogapp.ui
+package com.blogapp.ui.base
 
 import android.util.Log
+import com.blogapp.ui.DataStateChangeListener
+import com.blogapp.ui.displayErrorDialog
+import com.blogapp.ui.displayToast
 import com.data.session.SessionManager
 import com.domain.utils.*
 import dagger.android.support.DaggerAppCompatActivity

@@ -1,4 +1,4 @@
-package com.blogapp.ui.auth
+package com.blogapp.ui.base
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewbinding.ViewBinding
 import com.blogapp.ui.ViewModelProviderFactory
+import com.blogapp.ui.auth.AuthViewModel
 import dagger.android.support.DaggerFragment
 import javax.inject.Inject
 
