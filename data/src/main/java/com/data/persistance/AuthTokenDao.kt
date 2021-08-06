@@ -9,10 +9,13 @@ import com.data.models.AuthToken
 @Dao
 interface AuthTokenDao {
 
-//    @Insert(onConflict = OnConflictStrategy.REPLACE)
-//    suspend fun insert(authToken: AuthToken): Long
-//
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(authToken: AuthToken): Long
+
     @Query ("UPDATE auth_token SET token =null WHERE account_primary_key = :account_primary_key")
     fun nullifyToken(account_primary_key: Int): Int
+
+    @Query ("SELECT * FROM auth_token WHERE account_primary_key = :primary_key")
+    suspend fun searchByPrimaryKey(primary_key: Int): AuthToken?
 
 }
