@@ -68,4 +68,6 @@
     <string name="text_info">Info</string>
     <string name="delete">Delete</string>
     <string name="dont_have_an_account">Don\'t have an account?</string>
+    <string name="change_image">Change image</string>
+    <string name="write_some_content">Write some content...</string>
 </resources>
