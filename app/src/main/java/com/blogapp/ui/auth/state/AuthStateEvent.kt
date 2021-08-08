@@ -15,4 +15,6 @@ sealed class AuthStateEvent {
     ) : AuthStateEvent()
 
     object CheckPreviousAuthEvent : AuthStateEvent()
+
+    object None: AuthStateEvent()
 }

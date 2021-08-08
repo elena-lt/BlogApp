@@ -29,6 +29,12 @@ abstract class BaseBlogFragment <out T: ViewBinding> : DaggerFragment(){
         return binding!!.root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+//        cancelActiveJobs()
+    }
+
     override fun onAttach(context: Context) {
         super.onAttach(context)
         try{

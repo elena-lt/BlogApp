@@ -10,12 +10,12 @@ import com.data.models.RegistrationResponse
 import com.data.network.auth.OpenApiAuthService
 import com.data.persistance.AccountPropertiesDao
 import com.data.persistance.AuthTokenDao
+import com.data.repository.JobManager
 import com.data.repository.NetworkBoundResource
 import com.data.session.SessionManager
 import com.data.utils.ErrorHandling.Companion.ERROR_SAVE_AUTH_TOKEN
 import com.data.utils.ErrorHandling.Companion.GENERIC_AUTH_ERROR
 import com.data.utils.GenericApiResponse
-import com.data.utils.PreferenceKeys
 import com.data.utils.PreferenceKeys.Companion.PREVIOUS_AUTH_USER
 import com.data.utils.SuccessHandling.Companion.RESPONSE_CHECK_PREVIOUS_AUTH_USER_DONE
 import com.domain.models.AuthTokenDomain
@@ -34,15 +34,13 @@ class AuthRepositoryImp @Inject constructor(
     val accountPropertiesDao: AccountPropertiesDao,
     val sessionManager: SessionManager,
     val openApiAuthService: OpenApiAuthService,
-    val sharedPreferences: SharedPreferences,
+    private val sharedPreferences: SharedPreferences,
     val sharedPreferencesEditor: SharedPreferences.Editor
-) : AuthRepository {
-
-    var repositoryJob: Job? = null
+) : AuthRepository, JobManager("AuthRepositoryImp") {
 
     override fun login(email: String, password: String): LiveData<DataState<AuthViewState>> {
         val loginFieldsError = LoginFields(email, password).isValidForLogin()
-        if (!loginFieldsError.equals(LoginFields.LoginError.none())) {
+        if (loginFieldsError != LoginFields.LoginError.none()) {
             return errorResponse(loginFieldsError, ResponseType.Dialog())
         }
 
@@ -54,8 +52,8 @@ class AuthRepositoryImp @Inject constructor(
                 shouldLoadFromCache = false
             ) {
             override suspend fun handleApiSuccessResponse(response: GenericApiResponse.ApiSuccessResponse<LoginResponse>) {
-                if (response.body.response.equals(GENERIC_AUTH_ERROR)) {
-                    Log.d("AUTH_REPOSITORY", "handleApiSuccessResponse: ${response}")
+                if (response.body.response == GENERIC_AUTH_ERROR) {
+                    Log.d("AUTH_REPOSITORY", "handleApiSuccessResponse: $response")
                     onErrorReturned(
                         response.body.errorMessage,
                         shouldUseDialog = true,
@@ -103,8 +101,7 @@ class AuthRepositoryImp @Inject constructor(
             }
 
             override fun setJob(job: Job) {
-                repositoryJob?.cancel()
-                repositoryJob = job
+                addJob("login", job)
             }
 
             override suspend fun createCashRequestAndReturn() {
@@ -143,8 +140,8 @@ class AuthRepositoryImp @Inject constructor(
                 shouldLoadFromCache = false
             ) {
             override suspend fun handleApiSuccessResponse(response: GenericApiResponse.ApiSuccessResponse<RegistrationResponse>) {
-                if (response.body.response.equals(GENERIC_AUTH_ERROR)) {
-                    Log.d("AUTH_REPOSITORY", "handleApiSuccessResponse: ${response}")
+                if (response.body.response == GENERIC_AUTH_ERROR) {
+                    Log.d("AUTH_REPOSITORY", "handleApiSuccessResponse: $response")
                     onErrorReturned(
                         response.body.errorMessage,
                         shouldUseDialog = true,
@@ -191,8 +188,7 @@ class AuthRepositoryImp @Inject constructor(
             }
 
             override fun setJob(job: Job) {
-                repositoryJob?.cancel()
-                repositoryJob = job
+                addJob("register", job)
             }
 
             override suspend fun createCashRequestAndReturn() {
@@ -223,14 +219,8 @@ class AuthRepositoryImp @Inject constructor(
             }
         }
     }
-
-    fun cancelActiveJobs() {
-        Log.d("AUTH_REPOSITORY", "canceling ongoing jobs.........")
-        repositoryJob?.cancel()
-    }
-
     private fun saveAuthenticatedUserToSharedPrefs(email: String) {
-        sharedPreferencesEditor.putString(PreferenceKeys.PREVIOUS_AUTH_USER, email)
+        sharedPreferencesEditor.putString(PREVIOUS_AUTH_USER, email)
         sharedPreferencesEditor.apply()
     }
 
@@ -306,8 +296,7 @@ class AuthRepositoryImp @Inject constructor(
             }
 
             override fun setJob(job: Job) {
-                repositoryJob?.cancel()
-                repositoryJob = job
+                addJob("checkPreviousAuthUser", job)
             }
 
         }.asLiveData()

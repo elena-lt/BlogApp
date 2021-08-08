@@ -1,5 +1,6 @@
 package com.blogapp.ui.auth
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import com.blogapp.ui.base.BaseViewModel
 import com.blogapp.ui.auth.state.AuthStateEvent
@@ -8,6 +9,7 @@ import com.domain.models.AuthTokenDomain
 import com.domain.usecases.auth.CheckPreviousAuthUserUseCase
 import com.domain.usecases.auth.LoginUseCase
 import com.domain.usecases.auth.RegisterUseCase
+import com.domain.utils.AbsentLiveData
 import com.domain.utils.DataState
 import com.domain.viewState.AuthViewState
 import com.domain.viewState.LoginFields
@@ -36,6 +38,9 @@ class AuthViewModel @Inject constructor(
             }
             is CheckPreviousAuthEvent -> {
                 checkPrevAuthUser.invoke()
+            }
+            is None -> {
+                return AbsentLiveData.create()
             }
         }
     }
@@ -67,6 +72,20 @@ class AuthViewModel @Inject constructor(
         _viewState.value = update
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        cancelActiveJobs()
+    }
+
+    fun handlePendingData(){
+        setStateEvent(None)
+    }
+
+    fun cancelActiveJobs(){
+        handlePendingData()
+        Log.d("AppDebug", "AuthViewModel // cancelActiveJobs: cancelling active jobs")
+        //repository.canceljob
+    }
 
     override fun initNewViewState(): AuthViewState = AuthViewState()
 }

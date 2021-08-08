@@ -10,6 +10,7 @@ import com.data.models.mappers.Mapper
 import com.data.network.auth.OpenApiAuthService
 import com.data.network.main.OpenApiMainService
 import com.data.persistance.AccountPropertiesDao
+import com.data.repository.JobManager
 import com.data.repository.NetworkBoundResource
 import com.data.session.SessionManager
 import com.data.utils.GenericApiResponse
@@ -31,9 +32,7 @@ class AccountRepositoryImp @Inject constructor(
     private val openApiAuthService: OpenApiMainService,
     private val accountPropertiesDao: AccountPropertiesDao,
     val sessionManager: SessionManager
-) : AccountRepository {
-
-    private var repositoryJob: Job? = null
+) : AccountRepository, JobManager("AccountRepositoryImp") {
 
     override fun getAccountProperties(authToken: AuthTokenDomain): LiveData<DataState<AccountViewState>> {
         return object :
@@ -81,8 +80,7 @@ class AccountRepositoryImp @Inject constructor(
                 openApiAuthService.getAccountProperties("Token ${authToken.authToken}")
 
             override fun setJob(job: Job) {
-                repositoryJob?.cancel()
-                repositoryJob = job
+                addJob("getAccountProperties", job)
             }
 
             override suspend fun updateLocalDb(cacheObject: AccountProperties?) {
@@ -181,8 +179,7 @@ class AccountRepositoryImp @Inject constructor(
             }
 
             override fun setJob(job: Job) {
-                repositoryJob?.cancel()
-                repositoryJob = job
+                addJob("updateAccountProperties", job)
             }
 
         }.asLiveData()
@@ -195,51 +192,54 @@ class AccountRepositoryImp @Inject constructor(
     ): LiveData<DataState<AccountViewState>> {
         val authToken = sessionManager.cashedToken.value
         authToken?.let {
-                return object : NetworkBoundResource<GenericResponse, Any, AccountViewState>(
-                    isNetworkAvailable = sessionManager.isConnectedToInternet(),
-                    isNetworkRequest = true,
-                    shouldCancelIfNoInternet = true,
-                    shouldLoadFromCache = false
-                ) {
-                    override suspend fun createCashRequestAndReturn() {
-                        /*No-OPS*/
-                    }
+            return object : NetworkBoundResource<GenericResponse, Any, AccountViewState>(
+                isNetworkAvailable = sessionManager.isConnectedToInternet(),
+                isNetworkRequest = true,
+                shouldCancelIfNoInternet = true,
+                shouldLoadFromCache = false
+            ) {
+                override suspend fun createCashRequestAndReturn() {
+                    /*No-OPS*/
+                }
 
-                    override suspend fun handleApiSuccessResponse(response: GenericApiResponse.ApiSuccessResponse<GenericResponse>) {
-                       withContext(Main){
-                           onCompleteJob(
-                               DataState.data(
-                                   data = null,
-                                   response = Response(response.body.response, responseType = ResponseType.Toast())
-                               )
-                           )
-                       }
+                override suspend fun handleApiSuccessResponse(response: GenericApiResponse.ApiSuccessResponse<GenericResponse>) {
+                    withContext(Main) {
+                        onCompleteJob(
+                            DataState.data(
+                                data = null,
+                                response = Response(
+                                    response.body.response,
+                                    responseType = ResponseType.Toast()
+                                )
+                            )
+                        )
                     }
+                }
 
-                    override fun createCall(): LiveData<GenericApiResponse<GenericResponse>> {
-                        return openApiAuthService.changePassword("Token ${it.token!!}", oldPassword, newPassword, confirmNewPassword)
-                    }
+                override fun createCall(): LiveData<GenericApiResponse<GenericResponse>> {
+                    return openApiAuthService.changePassword(
+                        "Token ${it.token!!}",
+                        oldPassword,
+                        newPassword,
+                        confirmNewPassword
+                    )
+                }
 
-                    override fun loadFromCache(): LiveData<AccountViewState> {
-                        /*No-OPS*/
-                        return AbsentLiveData.create()
-                    }
+                override fun loadFromCache(): LiveData<AccountViewState> {
+                    /*No-OPS*/
+                    return AbsentLiveData.create()
+                }
 
-                    override suspend fun updateLocalDb(cacheObject: Any?) {
-                        /*No-OPS*/
-                    }
+                override suspend fun updateLocalDb(cacheObject: Any?) {
+                    /*No-OPS*/
+                }
 
-                    override fun setJob(job: Job) {
-                        repositoryJob?.cancel()
-                        repositoryJob = job
-                    }
+                override fun setJob(job: Job) {
+                   addJob("changePassword", job)
+                }
 
-                }.asLiveData()
+            }.asLiveData()
         } ?: return AbsentLiveData.create()
-    }
-
-    fun cancelActiveJobs() {
-        TODO()
     }
 
 }

@@ -10,7 +10,7 @@ import androidx.viewbinding.ViewBinding
 import com.blogapp.ui.DataStateChangeListener
 import dagger.android.support.DaggerFragment
 
-abstract class BaseCreateBlogFragment <out T: ViewBinding> : DaggerFragment(){
+abstract class BaseCreateBlogFragment<out T : ViewBinding> : DaggerFragment() {
 
     val TAG: String = "AppDebug"
 
@@ -28,19 +28,24 @@ abstract class BaseCreateBlogFragment <out T: ViewBinding> : DaggerFragment(){
         return binding.root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+//        cancelActiveJobs()
+    }
+
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        try{
+        try {
             stateChangeListener = context as DataStateChangeListener
-        }catch(e: ClassCastException){
-            Log.e(TAG, "$context must implement DataStateChangeListener" )
+        } catch (e: ClassCastException) {
+            Log.e(TAG, "$context must implement DataStateChangeListener")
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         _binding?.let {
-            _binding=null
+            _binding = null
         }
     }
 

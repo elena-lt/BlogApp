@@ -1,8 +1,10 @@
 package com.blogapp.ui.main.account
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import com.blogapp.models.AccountProperties
 import com.blogapp.models.mappers.AccountPropertiesMapper
+import com.blogapp.ui.auth.state.AuthStateEvent
 import com.blogapp.ui.base.BaseViewModel
 import com.blogapp.ui.main.account.state.AccountStateEvent
 import com.blogapp.ui.main.account.state.AccountStateEvent.*
@@ -65,6 +67,21 @@ class AccountViewModel @Inject constructor(
 
     fun logout() {
         sessionManager.logout()
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        cancelActiveJobs()
+    }
+
+    fun handlePendingData(){
+        setStateEvent(None)
+    }
+
+    fun cancelActiveJobs(){
+        handlePendingData()
+        Log.d("AppDebug", "AccountViewModel // cancelActiveJobs: cancelling active jobs")
+        //repository.canceljob
     }
 
     override fun initNewViewState(): AccountViewState = AccountViewState()

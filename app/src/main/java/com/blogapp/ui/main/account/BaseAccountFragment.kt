@@ -46,6 +46,8 @@ abstract class BaseAccountFragment<out T : ViewBinding> : DaggerFragment() {
         viewModel = activity?.run {
             ViewModelProvider(this, providerFactory).get(AccountViewModel::class.java)
         } ?: throw Exception("Invalid Activity")
+
+//        cancelActiveJobs()
     }
 
     override fun onAttach(context: Context) {
@@ -63,6 +65,11 @@ abstract class BaseAccountFragment<out T : ViewBinding> : DaggerFragment() {
             _binding = null
         }
     }
+
+    private fun cancelActiveJobs(){
+        viewModel.cancelActiveJobs()
+    }
+
 
     protected abstract val bindingInflater: (LayoutInflater) -> ViewBinding
 }

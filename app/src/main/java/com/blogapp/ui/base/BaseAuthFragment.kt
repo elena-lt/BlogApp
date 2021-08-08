@@ -38,6 +38,8 @@ abstract class BaseAuthFragment <out T: ViewBinding> : DaggerFragment(){
         viewModel = activity?.let{
             ViewModelProvider(it, providerFactory).get(AuthViewModel::class.java)
         }?: throw  Exception("Invalid Activity")
+
+//        cancelActiveJobs()
     }
 
     override fun onDestroy() {
@@ -45,6 +47,10 @@ abstract class BaseAuthFragment <out T: ViewBinding> : DaggerFragment(){
         _binding?.let {
             _binding=null
         }
+    }
+
+    private fun cancelActiveJobs(){
+        viewModel.cancelActiveJobs()
     }
 
     protected abstract val bindingInflater: (LayoutInflater) -> ViewBinding

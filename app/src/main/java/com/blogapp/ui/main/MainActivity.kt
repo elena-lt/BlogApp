@@ -81,4 +81,5 @@ class MainActivity : BaseActivity() {
         startActivity(intent)
         finish()
     }
+
 }
