@@ -41,16 +41,17 @@ class AuthRepositoryImp @Inject constructor(
     var repositoryJob: Job? = null
 
     override fun login(email: String, password: String): LiveData<DataState<AuthViewState>> {
-        Log.d("AUTH_REPOSITORY", "inside login fun")
         val loginFieldsError = LoginFields(email, password).isValidForLogin()
         if (!loginFieldsError.equals(LoginFields.LoginError.none())) {
             return errorResponse(loginFieldsError, ResponseType.Dialog())
         }
 
         return object :
-            NetworkBoundResource<LoginResponse, AuthViewState>(
+            NetworkBoundResource<LoginResponse, Any, AuthViewState>(
                 sessionManager.isConnectedToInternet(),
-                true
+                isNetworkRequest = true,
+                shouldCancelIfNoInternet = true,
+                shouldLoadFromCache = false
             ) {
             override suspend fun handleApiSuccessResponse(response: GenericApiResponse.ApiSuccessResponse<LoginResponse>) {
                 if (response.body.response.equals(GENERIC_AUTH_ERROR)) {
@@ -110,6 +111,15 @@ class AuthRepositoryImp @Inject constructor(
                 /*no-ops*/
             }
 
+            override fun loadFromCache(): LiveData<AuthViewState> {
+                /*no-ops*/
+                return AbsentLiveData.create()
+            }
+
+            override suspend fun updateLocalDb(cacheObject: Any?) {
+                /*no-ops*/
+            }
+
         }.asLiveData()
     }
 
@@ -126,9 +136,11 @@ class AuthRepositoryImp @Inject constructor(
         }
 
         return object :
-            NetworkBoundResource<RegistrationResponse, AuthViewState>(
+            NetworkBoundResource<RegistrationResponse, Any, AuthViewState>(
                 sessionManager.isConnectedToInternet(),
-                true
+                isNetworkRequest = true,
+                shouldCancelIfNoInternet = true,
+                shouldLoadFromCache = false
             ) {
             override suspend fun handleApiSuccessResponse(response: GenericApiResponse.ApiSuccessResponse<RegistrationResponse>) {
                 if (response.body.response.equals(GENERIC_AUTH_ERROR)) {
@@ -187,6 +199,15 @@ class AuthRepositoryImp @Inject constructor(
                 /*NO-OPS*/
             }
 
+            override fun loadFromCache(): LiveData<AuthViewState> {
+                /*no-ops*/
+                return AbsentLiveData.create()
+            }
+
+            override suspend fun updateLocalDb(cacheObject: Any?) {
+                /*no-ops*/
+            }
+
         }.asLiveData()
 
     }
@@ -219,9 +240,11 @@ class AuthRepositoryImp @Inject constructor(
             Log.d("AUTH_REPOSITORY", "checkPreviousAuthUser: No email saved")
             return returnNoTokenFound()
         }
-        return object : NetworkBoundResource<Void, AuthViewState>(
+        return object : NetworkBoundResource<Void, Any, AuthViewState>(
             sessionManager.isConnectedToInternet(),
-            false
+            isNetworkRequest = false,
+            shouldCancelIfNoInternet = true,
+            shouldLoadFromCache = false
         ) {
             override suspend fun createCashRequestAndReturn() {
                 accountPropertiesDao.searchByEmail(prevAuthUserEmail).let { accountProperties ->
@@ -271,6 +294,15 @@ class AuthRepositoryImp @Inject constructor(
             override fun createCall(): LiveData<GenericApiResponse<Void>> {
                 /*NO-OPS*/
                 return AbsentLiveData.create()
+            }
+
+            override fun loadFromCache(): LiveData<AuthViewState> {
+                /*no-ops*/
+                return AbsentLiveData.create()
+            }
+
+            override suspend fun updateLocalDb(cacheObject: Any?) {
+                /*no-ops*/
             }
 
             override fun setJob(job: Job) {

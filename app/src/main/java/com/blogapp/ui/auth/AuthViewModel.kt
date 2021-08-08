@@ -5,9 +5,9 @@ import com.blogapp.ui.base.BaseViewModel
 import com.blogapp.ui.auth.state.AuthStateEvent
 import com.blogapp.ui.auth.state.AuthStateEvent.*
 import com.domain.models.AuthTokenDomain
-import com.domain.usecases.CheckPreviousAuthUserUseCase
-import com.domain.usecases.LoginUseCase
-import com.domain.usecases.RegisterUseCase
+import com.domain.usecases.auth.CheckPreviousAuthUserUseCase
+import com.domain.usecases.auth.LoginUseCase
+import com.domain.usecases.auth.RegisterUseCase
 import com.domain.utils.DataState
 import com.domain.viewState.AuthViewState
 import com.domain.viewState.LoginFields

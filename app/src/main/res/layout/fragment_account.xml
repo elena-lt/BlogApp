@@ -65,8 +65,7 @@
                 android:id="@+id/username"
                 android:textColor="#000"
                 android:hint="@string/your_username"
-                android:textSize="20sp"
-                />
+                android:textSize="20sp"/>
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -82,14 +81,25 @@
             android:textColor="@color/link_blue"
             android:text="@string/change_password"
             android:id="@+id/change_password"
-            android:gravity="center"
-            />
+            android:gravity="center" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@+id/change_password"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:textSize="18sp"
+            android:textColor="@color/link_blue"
+            android:text="Update Account"
+            android:id="@+id/update_account"
+            android:gravity="center" />
 
         <Button
             android:id="@+id/logout_button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toBottomOf="@+id/change_password"
+            app:layout_constraintTop_toBottomOf="@+id/update_account"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -101,8 +111,7 @@
             android:layout_marginLeft="15dp"
             android:layout_marginRight="15dp"
             android:layout_marginTop="50dp"
-            android:layout_marginBottom="30dp"
-            />
+            android:layout_marginBottom="30dp"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </ScrollView>

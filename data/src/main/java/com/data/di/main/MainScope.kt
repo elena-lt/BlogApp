@@ -1,4 +1,4 @@
-package com.blogapp.di.main
+package com.data.di.main
 
 import javax.inject.Scope
 

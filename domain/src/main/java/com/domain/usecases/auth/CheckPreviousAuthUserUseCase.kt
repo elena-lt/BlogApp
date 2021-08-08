@@ -1,4 +1,4 @@
-package com.domain.usecases
+package com.domain.usecases.auth
 
 import com.domain.repository.AuthRepository
 import javax.inject.Inject

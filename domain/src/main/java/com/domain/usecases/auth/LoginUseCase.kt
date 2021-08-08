@@ -1,4 +1,4 @@
-package com.domain.usecases
+package com.domain.usecases.auth
 
 import android.util.Log
 import androidx.lifecycle.LiveData
