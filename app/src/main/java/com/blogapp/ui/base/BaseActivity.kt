@@ -1,6 +1,8 @@
 package com.blogapp.ui.base
 
+import android.content.Context
 import android.util.Log
+import android.view.inputmethod.InputMethodManager
 import com.blogapp.ui.DataStateChangeListener
 import com.blogapp.ui.displayErrorDialog
 import com.blogapp.ui.displayToast
@@ -77,4 +79,11 @@ abstract class BaseActivity : DaggerAppCompatActivity(), DataStateChangeListener
     }
 
     abstract fun showProgressBar(showPB: Boolean)
+
+    override fun hideSoftKeyboard() {
+        if (currentFocus != null){
+            val inputMethodManager = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            inputMethodManager.hideSoftInputFromWindow(currentFocus!!.windowToken, 0)
+        }
+    }
 }

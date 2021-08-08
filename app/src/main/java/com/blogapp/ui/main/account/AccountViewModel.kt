@@ -9,6 +9,7 @@ import com.blogapp.ui.main.account.state.AccountStateEvent.*
 import com.data.models.AuthToken
 import com.data.session.SessionManager
 import com.domain.models.AuthTokenDomain
+import com.domain.usecases.main.account.ChangePasswordUseCase
 import com.domain.usecases.main.account.GetAccountPropertiesUseCase
 import com.domain.usecases.main.account.UpdateAccountPropertiesUseCase
 import com.domain.utils.AbsentLiveData
@@ -19,8 +20,9 @@ import javax.inject.Inject
 class AccountViewModel @Inject constructor(
     private val getAccountPropertiesUseCase: GetAccountPropertiesUseCase,
     private val updateAccountProperties: UpdateAccountPropertiesUseCase,
+    private val changePassword: ChangePasswordUseCase,
     private val sessionManager: SessionManager
-): BaseViewModel<AccountStateEvent, AccountViewState>() {
+) : BaseViewModel<AccountStateEvent, AccountViewState>() {
 
     //TODO ("create mapper: AuthToken")
     override fun handleStateEvent(stateEvent: AccountStateEvent): LiveData<DataState<AccountViewState>> {
@@ -29,14 +31,18 @@ class AccountViewModel @Inject constructor(
                 return sessionManager.cashedToken.value?.let { authToken -> //data.authToken
                     val token = AuthTokenDomain(authToken.account_primary_key, authToken.token)
                     getAccountPropertiesUseCase.invoke(token)
-                }?: AbsentLiveData.create()
+                } ?: AbsentLiveData.create()
 
             }
             is UpdateAccountProperties -> {
                 updateAccountProperties.invoke(stateEvent.email!!, stateEvent.username!!)
             }
             is ChangePasswordEvent -> {
-                AbsentLiveData.create()
+                changePassword.involke(
+                    stateEvent.currentPassword,
+                    stateEvent.newPassword,
+                    stateEvent.confirmNewPassword
+                )
             }
             is None -> {
                 AbsentLiveData.create()
@@ -46,14 +52,18 @@ class AccountViewModel @Inject constructor(
 
     fun setAccountPropertiesData(accountProperties: AccountProperties) {
         val update = getCurrentViewStateOrNew()
-        if (update.accountProperties == AccountPropertiesMapper.toAccountPropertiesDomain(accountProperties)) return
+        if (update.accountProperties == AccountPropertiesMapper.toAccountPropertiesDomain(
+                accountProperties
+            )
+        ) return
         else {
-            update.accountProperties = AccountPropertiesMapper.toAccountPropertiesDomain(accountProperties)
+            update.accountProperties =
+                AccountPropertiesMapper.toAccountPropertiesDomain(accountProperties)
             _viewState.value = update
         }
     }
 
-    fun logout(){
+    fun logout() {
         sessionManager.logout()
     }
 

@@ -1,5 +1,6 @@
 package com.blogapp.ui.main
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -11,13 +12,13 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.blogapp.R
+import com.blogapp.ui.auth.AuthActivity
 import com.blogapp.ui.base.BaseActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : BaseActivity() {
 
     private lateinit var navController: NavController
-//    private lateinit var appBarConfiguration: AppBarConfiguration
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,9 +47,10 @@ class MainActivity : BaseActivity() {
 
     private fun subscribeToObservers() {
         sessionManager.cashedToken.observe(this, { authToken ->
-            Log.d("MAIN_ACTIVITY", "authToken is $authToken")
+            Log.d("MAIN_ACTIVITY", "authToken in main activity $authToken")
             if (authToken == null || authToken.account_primary_key == -1 || authToken.token == null) {
-                Log.d("MAIN_ACTIVITY", "Navigating to auth activity")
+                Log.d("AppDebug", "subscribeToObservers: navigating to auth activity")
+                navToAuthActivity()
             }
         })
     }
@@ -71,5 +73,12 @@ class MainActivity : BaseActivity() {
         ).build()
         setupActionBarWithNavController( navController, appBarConfiguration)
 
+    }
+
+    private fun navToAuthActivity(){
+        val intent = Intent(this, AuthActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
     }
 }

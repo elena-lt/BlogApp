@@ -86,6 +86,7 @@ class AuthActivity : BaseActivity() {
         sessionManager.cashedToken.observe(this, { authToken ->
             Log.d("AUTH_ACTIVITY", "authToken is $authToken")
             if (authToken != null && authToken.account_primary_key != -1 && authToken.token != null) {
+                Log.d("AppDebug", "subscribeToObservers: navigation to main activity")
                 navToMainActivity()
             }
         })

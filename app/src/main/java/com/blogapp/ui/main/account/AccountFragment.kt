@@ -2,10 +2,8 @@ package com.blogapp.ui.main.account
 
 import android.os.Bundle
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.navigation.fragment.findNavController
 import androidx.viewbinding.ViewBinding
 import com.blogapp.R
@@ -13,7 +11,6 @@ import com.blogapp.databinding.FragmentAccountBinding
 import com.blogapp.models.AccountProperties
 import com.blogapp.models.mappers.AccountPropertiesMapper
 import com.blogapp.ui.main.account.state.AccountStateEvent
-import com.data.models.mappers.Mapper
 
 class AccountFragment : BaseAccountFragment<FragmentAccountBinding>() {
 
@@ -23,7 +20,7 @@ class AccountFragment : BaseAccountFragment<FragmentAccountBinding>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        handleClickListeners()
+        handleOnClickEvents()
         subscribeToObservers()
     }
 
@@ -32,7 +29,11 @@ class AccountFragment : BaseAccountFragment<FragmentAccountBinding>() {
         viewModel.setStateEvent(AccountStateEvent.GetAccountPropertiesEvent)
     }
 
-    private fun handleClickListeners() {
+    private fun handleOnClickEvents() {
+        binding.changePassword.setOnClickListener {
+            findNavController().navigate(R.id.action_accountFragment_to_changePasswordFragment)
+        }
+
         binding.logoutButton.setOnClickListener {
             viewModel.logout()
         }
@@ -62,10 +63,14 @@ class AccountFragment : BaseAccountFragment<FragmentAccountBinding>() {
             }
         })
 
-        viewModel.viewState.observe(viewLifecycleOwner, {viewState ->
-            viewState?.let{
-                it.accountProperties?.let {accountProperties ->
-                    setAccountProperties(AccountPropertiesMapper.toAccountProperties(accountProperties))
+        viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
+            viewState?.let {
+                it.accountProperties?.let { accountProperties ->
+                    setAccountProperties(
+                        AccountPropertiesMapper.toAccountProperties(
+                            accountProperties
+                        )
+                    )
                 }
             }
         })

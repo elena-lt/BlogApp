@@ -188,6 +188,56 @@ class AccountRepositoryImp @Inject constructor(
         }.asLiveData()
     }
 
+    override fun changePassword(
+        oldPassword: String,
+        newPassword: String,
+        confirmNewPassword: String
+    ): LiveData<DataState<AccountViewState>> {
+        val authToken = sessionManager.cashedToken.value
+        authToken?.let {
+                return object : NetworkBoundResource<GenericResponse, Any, AccountViewState>(
+                    isNetworkAvailable = sessionManager.isConnectedToInternet(),
+                    isNetworkRequest = true,
+                    shouldCancelIfNoInternet = true,
+                    shouldLoadFromCache = false
+                ) {
+                    override suspend fun createCashRequestAndReturn() {
+                        /*No-OPS*/
+                    }
+
+                    override suspend fun handleApiSuccessResponse(response: GenericApiResponse.ApiSuccessResponse<GenericResponse>) {
+                       withContext(Main){
+                           onCompleteJob(
+                               DataState.data(
+                                   data = null,
+                                   response = Response(response.body.response, responseType = ResponseType.Toast())
+                               )
+                           )
+                       }
+                    }
+
+                    override fun createCall(): LiveData<GenericApiResponse<GenericResponse>> {
+                        return openApiAuthService.changePassword("Token ${it.token!!}", oldPassword, newPassword, confirmNewPassword)
+                    }
+
+                    override fun loadFromCache(): LiveData<AccountViewState> {
+                        /*No-OPS*/
+                        return AbsentLiveData.create()
+                    }
+
+                    override suspend fun updateLocalDb(cacheObject: Any?) {
+                        /*No-OPS*/
+                    }
+
+                    override fun setJob(job: Job) {
+                        repositoryJob?.cancel()
+                        repositoryJob = job
+                    }
+
+                }.asLiveData()
+        } ?: return AbsentLiveData.create()
+    }
+
     fun cancelActiveJobs() {
         TODO()
     }

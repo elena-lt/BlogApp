@@ -10,4 +10,6 @@ interface AccountRepository {
     fun getAccountProperties(authToken: AuthTokenDomain): LiveData<DataState<AccountViewState>>
 
     fun updateAccountProperties(email: String, username: String): LiveData<DataState<AccountViewState>>
+
+    fun changePassword (oldPassword: String, newPassword: String, confirmNewPassword: String): LiveData<DataState<AccountViewState>>
 }
