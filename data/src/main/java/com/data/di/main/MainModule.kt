@@ -41,6 +41,7 @@ class MainModule {
     @Provides
     fun provideBlogPostDao(database: AppDatabase): BlogPostDao = database.getBlogPostDao()
 
+    @InternalCoroutinesApi
     @MainScope
     @Provides
     fun provideBlogDataSource(

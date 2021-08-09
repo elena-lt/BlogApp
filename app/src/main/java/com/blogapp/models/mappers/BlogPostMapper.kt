@@ -16,4 +16,16 @@ object BlogPostMapper {
             blogPost.username
         )
     }
+
+    fun toBlogPost(blogPost: BlogPostDomain): BlogPost {
+        return BlogPost(
+            blogPost.primaryKey,
+            blogPost.title,
+            blogPost.slug,
+            blogPost.body,
+            blogPost.image,
+            blogPost.date_updated,
+            blogPost.username
+        )
+    }
 }

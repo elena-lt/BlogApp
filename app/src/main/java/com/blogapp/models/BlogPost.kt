@@ -6,6 +6,6 @@ data class BlogPost(
     var slug: String,
     var body: String,
     var image: String,
-    var date_updated: Long,
+    var date_updated: String,
     var username: String
 )
