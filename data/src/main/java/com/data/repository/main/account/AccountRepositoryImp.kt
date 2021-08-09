@@ -1,13 +1,11 @@
-package com.data.repository.main
+package com.data.repository.main.account
 
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Transformations
 import com.data.models.AccountProperties
-import com.data.models.AuthToken
 import com.data.models.GenericResponse
 import com.data.models.mappers.Mapper
-import com.data.network.auth.OpenApiAuthService
 import com.data.network.main.OpenApiMainService
 import com.data.persistance.AccountPropertiesDao
 import com.data.repository.JobManager
