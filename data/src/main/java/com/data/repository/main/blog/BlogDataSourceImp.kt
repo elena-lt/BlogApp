@@ -12,10 +12,7 @@ import com.data.persistance.BlogPostDao
 import com.data.repository.JobManager
 import com.data.repository.NetworkBoundResource
 import com.data.session.SessionManager
-import com.data.utils.DateUtils
 import com.data.utils.GenericApiResponse
-import com.domain.models.BlogPostDomain
-import com.domain.utils.AbsentLiveData
 import com.domain.utils.DataState
 import com.domain.viewState.BlogViewState
 import kotlinx.coroutines.Dispatchers.IO

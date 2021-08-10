@@ -1,4 +1,4 @@
-package com.data.utils
+package com.blogapp.utils
 
 import java.text.SimpleDateFormat
 import java.util.*
