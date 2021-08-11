@@ -18,8 +18,12 @@ class BlogViewModel @Inject constructor(
     override fun handleStateEvent(stateEvent: BlogStateEvent): LiveData<DataState<BlogViewState>> {
         return when (stateEvent) {
             is BlogStateEvent.BlogSearchEvent -> {
-                searchBlogPost.invoke(viewState.value?.blogFields?.searchQuery ?:"")
+                searchBlogPost.invoke(viewState.value?.blogFields?.searchQuery ?: "")
             }
+            is BlogStateEvent.CheckAuthorOfTheBlogPost -> {
+                AbsentLiveData.create()
+            }
+
             is BlogStateEvent.None -> {
                 AbsentLiveData.create()
             }
@@ -42,6 +46,18 @@ class BlogViewModel @Inject constructor(
         update.blogFields.blogList = blogList.map {
             BlogPostMapper.toBlogPostDomain(it)
         }
+        _viewState.value = update
+    }
+
+    fun setBlogPost(blogPost: BlogPost) {
+        val update = getCurrentViewStateOrNew()
+        update.viewBlogFields.blogPost = BlogPostMapper.toBlogPostDomain(blogPost)
+        _viewState.value = update
+    }
+
+    fun setAuthorOfBlogPost(isAuthorOfBlogPost: Boolean) {
+        val update = getCurrentViewStateOrNew()
+        update.viewBlogFields.isAuthorOfBlogPost = isAuthorOfBlogPost
         _viewState.value = update
     }
 

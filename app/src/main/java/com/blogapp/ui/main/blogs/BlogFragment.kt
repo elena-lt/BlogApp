@@ -22,8 +22,6 @@ import javax.inject.Inject
 
 class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
 
-    @Inject
-    lateinit var requestManager: RequestManager
     private lateinit var rvAdapter: BlogRvAdapter
 
     override val bindingInflater: (LayoutInflater) -> ViewBinding
@@ -103,7 +101,8 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
     }
 
     override fun onItemSelected(position: Int, item: BlogPost) {
-        Log.d(TAG, "onItemSelected: $item")
+        viewModel.setBlogPost(item)
+        findNavController().navigate(R.id.action_blogFragment_to_viewBlogFragment)
     }
 
 }
