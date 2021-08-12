@@ -12,7 +12,9 @@ import com.data.di.main.MainModule
 import com.data.di.main.MainScope
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
+import kotlinx.coroutines.InternalCoroutinesApi
 
+@InternalCoroutinesApi
 @Module
 abstract class ActivityBuildersModule {
 

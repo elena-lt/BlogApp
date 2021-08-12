@@ -32,7 +32,7 @@ class MainActivity : BaseActivity() {
 //        setupActionBarWithNavController(navController)
 
         bottomNavigationView.setOnItemReselectedListener {
-            TODO()
+
         }
 
         subscribeToObservers()

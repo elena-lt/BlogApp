@@ -10,6 +10,8 @@ import com.data.session.SessionManager
 import com.data.utils.Const
 import com.data.utils.GenericApiResponse
 import com.domain.models.BlogPostDomain
+import retrofit2.HttpException
+import java.io.IOException
 
 class BlogPostsPagingSource(
     private val openApiMainService: OpenApiMainService,
@@ -27,29 +29,32 @@ class BlogPostsPagingSource(
     }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, BlogPostDomain> {
-        Log.d("AppDebug", "Inside load fun")
         val token = sessionManager.cashedToken.value
         val position = params.key ?: Const.STARTING_PAGE_INDEX
 
-        val response =
-            openApiMainService.searchBlogPosts(
-                authorization = "Token ${token!!.token}",
-                page = position
-            )
-        return if (response.isSuccessful) {
-            Log.d("AppDebug", "searchBlogPosts 4reswponse is successfull")
-            LoadResult.Page(
-                data = response.body()?.results?.map {
-                    BlogPostMapper.toBlogPostDomain(it)
-                } ?: emptyList(),
-                prevKey = if (position == Const.STARTING_PAGE_INDEX) null else position - 1,
-                nextKey = if (response.body()?.results?.size!! < position) null else position + 1
-            )
-        } else {
-            Log.d("AppDebug", "empty response")
-            LoadResult.Error(
-                response.message() as Throwable
-            )
+        return try {
+            val response =
+                openApiMainService.searchBlogPosts(
+                    authorization = "Token ${token!!.token}",
+                    page = position
+                )
+            if (response.isSuccessful) {
+                LoadResult.Page(
+                    data = response.body()?.results?.map {
+                        BlogPostMapper.toBlogPostDomain(it)
+                    } ?: emptyList(),
+                    prevKey = if (position == Const.STARTING_PAGE_INDEX) null else position - 1,
+                    nextKey = if (response.body()?.results?.size!! < position) null else position + 1
+                )
+            } else {
+                LoadResult.Error(HttpException(response))
+            }
+        } catch (e: IOException) {
+            Log.d("AppDebug", e.message ?: "Unknown IOException")
+            LoadResult.Error(e)
+        } catch (e: HttpException) {
+            Log.d("AppDebug", e.message ?: "Unknown HttpException ")
+            LoadResult.Error(e)
         }
     }
 }

@@ -1,20 +1,13 @@
 package com.data.repository.main.blog
 
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.liveData
-import androidx.lifecycle.map
-import androidx.lifecycle.switchMap
 import androidx.paging.*
-import com.data.models.mappers.BlogPostMapper
 import com.data.network.main.OpenApiMainService
 import com.data.persistance.BlogPostDao
 import com.data.repository.JobManager
 import com.data.repository.main.blog.pagingSource.BlogPostsPagingSource
 import com.data.session.SessionManager
 import com.domain.models.BlogPostDomain
-import com.domain.utils.DataState
-import com.domain.viewState.BlogViewState
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject

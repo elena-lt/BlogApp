@@ -4,8 +4,11 @@ import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.paging.LoadState
 import androidx.paging.map
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -17,6 +20,7 @@ import com.blogapp.models.BlogPost
 import com.blogapp.models.mappers.BlogPostMapper
 import com.blogapp.recyclerViewUtils.BlogRvAdapter
 import com.blogapp.recyclerViewUtils.OnClickListener
+import com.blogapp.recyclerViewUtils.PagingLoadStateAdapter
 import com.blogapp.recyclerViewUtils.TopSpacingItemDecoration
 import com.blogapp.ui.main.blogs.state.BlogStateEvent
 import com.bumptech.glide.RequestManager
@@ -48,73 +52,24 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
     }
 
     private fun execute() {
-//        viewModel.setQuery("")
         viewModel.setEvent(BlogStateEvent.BlogSearchEvent)
     }
 
     private fun handleOnCLickEvents() {
-
+        binding.retryButton.setOnClickListener { rvAdapter.retry() }
     }
 
     private fun subscribeToObservers() {
-        viewLifecycleOwner.lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launchWhenResumed {
             viewModel.state.collect {
-                it.blogPosts?.let{pagingData->
+                it.blogPosts?.let { pagingData ->
                     val blogs = pagingData.map { blog ->
-                        Log.d("AppDebug", "viewModel // subscribeToObservers: ${blog.title} ")
                         BlogPostMapper.toBlogPost(blog)
                     }
                     rvAdapter.submitData(blogs)
                 }
             }
         }
-
-//        viewModel.dataState.observe(viewLifecycleOwner, { dataState ->
-//            dataState?.let {
-//                stateChangeListener.dataStateChange(dataState)
-//                dataState.data?.let {
-//                    it.data?.let { event ->
-//                        event.getContentIfNotHandled()?.let {
-//                            Log.d(TAG, "subscribeToObservers: dataState: ${it}")
-//                            viewModel.setBlogList(it.blogFields.blogList.map { blogPost ->
-//                                BlogPostMapper.toBlogPost(blogPost)
-//                            })
-//                            it.blogFields.blogPosts?.let { livedata ->
-//                                viewModel.setBlogPostsList(livedata)
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        })
-
-//        viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
-//            Log.d(TAG, "subscribeToObservers: ViewState: ${viewState}")
-//            viewState?.let {
-//                rvAdapter.submitList(
-//                    list = viewState.blogFields.blogList.map {
-//                        BlogPostMapper.toBlogPost(it)
-//                    },
-//                    isQueryExhausted = true
-//                )
-//            }
-//        })
-
-//        lifecycleScope.launch {
-//            viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
-//                viewState?.let {
-//                    it.blogFields.blogPosts?.let {
-//                        it.value?.let { pagingData ->
-//                            MainScope().launch {
-//                                rvAdapter.submitData(pagingData.map { blog ->
-//                                    BlogPostMapper.toBlogPost(blog)
-//                                })
-//                            }
-//                        }
-//                    }
-//                }
-//            })
-//        }
     }
 
     private fun initRecyclerAdapter() {
@@ -126,17 +81,35 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
                 onClickListener = this@BlogFragment,
                 requestManager = requestManager
             )
-            addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                    super.onScrollStateChanged(recyclerView, newState)
-                    val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                    val lastPosition = layoutManager.findLastVisibleItemPosition()
-                    if (lastPosition == rvAdapter.itemCount.minus(1)) {
-                        Log.d(TAG, "onScrollStateChanged: attempting to load next page")
-                    }
+            rvAdapter.withLoadStateHeaderAndFooter(
+                header = PagingLoadStateAdapter { rvAdapter.retry() },
+                footer = PagingLoadStateAdapter { rvAdapter.retry() }
+            )
+
+            rvAdapter.addLoadStateListener { loadState ->
+
+                // Show loading spinner during initial load or refresh.
+                binding.progressBar.isVisible = loadState.source.refresh is LoadState.Loading
+
+                // Show the retry state if initial load or refresh fails.
+                binding.retryButton.isVisible = loadState.source.refresh is LoadState.Error
+
+                // Only show the list if refresh succeeds.
+                binding.blogPostRecyclerview.isVisible =
+                    loadState.source.refresh is LoadState.NotLoading
+
+                val errorState = loadState.source.append as? LoadState.Error
+                    ?: loadState.source.prepend as? LoadState.Error
+                    ?: loadState.append as? LoadState.Error
+                errorState?.let {
+                    Toast.makeText(
+                        requireContext(),
+                        "\uD83D\uDE28 Whoops ${it.error}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
-            })
-            adapter = rvAdapter
+                adapter = rvAdapter
+            }
         }
     }
 
