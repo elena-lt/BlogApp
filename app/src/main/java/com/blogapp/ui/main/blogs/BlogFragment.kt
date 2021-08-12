@@ -62,11 +62,12 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
     private fun subscribeToObservers() {
         viewLifecycleOwner.lifecycleScope.launchWhenResumed {
             viewModel.state.collect {
-                it.blogPosts?.let { pagingData ->
-                    val blogs = pagingData.map { blog ->
+                it.blogFields.blogPosts?.let{pagingData ->
+                    val blogs = pagingData.map{blog ->
                         BlogPostMapper.toBlogPost(blog)
                     }
                     rvAdapter.submitData(blogs)
+
                 }
             }
         }
