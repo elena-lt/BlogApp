@@ -21,7 +21,7 @@ sealed class GenericApiResponse<T> {
     data class ApiErrorResponse<T>(val errorMessage: String) : GenericApiResponse<T>()
 
     companion object {
-        private val TAG: String = "AppDebug"
+        val TAG: String = "AppDebug"
 
 
         fun <T> create(error: Throwable): ApiErrorResponse<T> {

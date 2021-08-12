@@ -7,5 +7,5 @@ class SearchBlogPostsUseCase @Inject constructor(
     private val blogRepository: BlogRepository
 ) {
 
-    fun invoke(query: String) = blogRepository.searchBlogPosts(query)
+    suspend fun invoke(query: String) = blogRepository.searchBlogPosts(query)
 }

@@ -12,8 +12,12 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
 import dagger.Provides
+import okhttp3.Dns
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 @Module
@@ -21,12 +25,21 @@ class RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideGson() : Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
+    fun provideGson(): Gson = GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
 
     @Provides
     @Singleton
-    fun provideRetrofit(gson: Gson) = Retrofit.Builder()
+    fun provideOkHttpClient(): OkHttpClient {
+        val logging = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
+        return OkHttpClient.Builder().addInterceptor(logging).dns(Dns.SYSTEM)
+            .connectTimeout(60, TimeUnit.SECONDS).readTimeout(60, TimeUnit.SECONDS).build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRetrofit(gson: Gson, okHttpClient: OkHttpClient) = Retrofit.Builder()
         .baseUrl(BASE_URL)
+        .client(okHttpClient)
         .addCallAdapterFactory(LiveDataCallAdapterFactory())
         .addConverterFactory(GsonConverterFactory.create(gson))
         .build()

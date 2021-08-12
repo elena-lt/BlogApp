@@ -4,7 +4,9 @@ import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.paging.map
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewbinding.ViewBinding
@@ -18,8 +20,15 @@ import com.blogapp.recyclerViewUtils.OnClickListener
 import com.blogapp.recyclerViewUtils.TopSpacingItemDecoration
 import com.blogapp.ui.main.blogs.state.BlogStateEvent
 import com.bumptech.glide.RequestManager
+import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+@InternalCoroutinesApi
 class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
 
     private lateinit var rvAdapter: BlogRvAdapter
@@ -39,8 +48,8 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
     }
 
     private fun execute() {
-        viewModel.setQuery("")
-        viewModel.setStateEvent(BlogStateEvent.BlogSearchEvent)
+//        viewModel.setQuery("")
+        viewModel.setEvent(BlogStateEvent.BlogSearchEvent)
     }
 
     private fun handleOnCLickEvents() {
@@ -48,33 +57,64 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
     }
 
     private fun subscribeToObservers() {
-        viewModel.dataState.observe(viewLifecycleOwner, { dataState ->
-            dataState?.let {
-                stateChangeListener.dataStateChange(dataState)
-                dataState.data?.let {
-                    it.data?.let { event ->
-                        event.getContentIfNotHandled()?.let {
-                            Log.d(TAG, "subscribeToObservers: dataState: ${it}")
-                            viewModel.setBlogList(it.blogFields.blogList.map { blogPost ->
-                                BlogPostMapper.toBlogPost(blogPost)
-                            })
-                        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.state.collect {
+                it.blogPosts?.let{pagingData->
+                    val blogs = pagingData.map { blog ->
+                        Log.d("AppDebug", "viewModel // subscribeToObservers: ${blog.title} ")
+                        BlogPostMapper.toBlogPost(blog)
                     }
+                    rvAdapter.submitData(blogs)
                 }
             }
-        })
+        }
 
-        viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
-            Log.d(TAG, "subscribeToObservers: ViewState: ${viewState}")
-            viewState?.let {
-                rvAdapter.submitList(
-                    list = viewState.blogFields.blogList.map {
-                        BlogPostMapper.toBlogPost(it)
-                    },
-                    isQueryExhausted = true
-                )
-            }
-        })
+//        viewModel.dataState.observe(viewLifecycleOwner, { dataState ->
+//            dataState?.let {
+//                stateChangeListener.dataStateChange(dataState)
+//                dataState.data?.let {
+//                    it.data?.let { event ->
+//                        event.getContentIfNotHandled()?.let {
+//                            Log.d(TAG, "subscribeToObservers: dataState: ${it}")
+//                            viewModel.setBlogList(it.blogFields.blogList.map { blogPost ->
+//                                BlogPostMapper.toBlogPost(blogPost)
+//                            })
+//                            it.blogFields.blogPosts?.let { livedata ->
+//                                viewModel.setBlogPostsList(livedata)
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        })
+
+//        viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
+//            Log.d(TAG, "subscribeToObservers: ViewState: ${viewState}")
+//            viewState?.let {
+//                rvAdapter.submitList(
+//                    list = viewState.blogFields.blogList.map {
+//                        BlogPostMapper.toBlogPost(it)
+//                    },
+//                    isQueryExhausted = true
+//                )
+//            }
+//        })
+
+//        lifecycleScope.launch {
+//            viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
+//                viewState?.let {
+//                    it.blogFields.blogPosts?.let {
+//                        it.value?.let { pagingData ->
+//                            MainScope().launch {
+//                                rvAdapter.submitData(pagingData.map { blog ->
+//                                    BlogPostMapper.toBlogPost(blog)
+//                                })
+//                            }
+//                        }
+//                    }
+//                }
+//            })
+//        }
     }
 
     private fun initRecyclerAdapter() {
@@ -101,7 +141,7 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
     }
 
     override fun onItemSelected(position: Int, item: BlogPost) {
-        viewModel.setBlogPost(item)
+//        viewModel.setBlogPost(item)
         findNavController().navigate(R.id.action_blogFragment_to_viewBlogFragment)
     }
 

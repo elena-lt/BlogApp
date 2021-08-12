@@ -9,7 +9,9 @@ import com.blogapp.ui.main.blogs.ViewBlogFragment
 import com.blogapp.ui.main.createPost.CreateNewBlogFragment
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
+import kotlinx.coroutines.InternalCoroutinesApi
 
+@InternalCoroutinesApi
 @Module
 abstract class MainFragmentBuildersModules {
 

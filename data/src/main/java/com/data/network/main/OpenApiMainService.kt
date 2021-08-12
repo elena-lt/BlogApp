@@ -5,6 +5,7 @@ import com.data.models.AccountProperties
 import com.data.models.BlogSearchResponse
 import com.data.models.GenericResponse
 import com.data.utils.GenericApiResponse
+import retrofit2.Response
 import retrofit2.http.*
 
 interface OpenApiMainService {
@@ -35,5 +36,12 @@ interface OpenApiMainService {
     fun searchListBlogPost(
         @Header("Authorization") authorization: String,
         @Query("search") query: String,
+        @Query ("page") page: Int
     ): LiveData<GenericApiResponse<BlogSearchResponse>>
+
+    @GET("blog/list")
+    suspend fun searchBlogPosts(
+        @Header("Authorization") authorization: String,
+        @Query ("page") page: Int
+    ): Response<BlogSearchResponse>
 }

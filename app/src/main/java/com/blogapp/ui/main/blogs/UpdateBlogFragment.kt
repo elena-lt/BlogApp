@@ -8,7 +8,9 @@ import android.view.ViewGroup
 import androidx.viewbinding.ViewBinding
 import com.blogapp.R
 import com.blogapp.databinding.FragmentUpdateBlogBinding
+import kotlinx.coroutines.InternalCoroutinesApi
 
+@InternalCoroutinesApi
 class UpdateBlogFragment : BaseBlogFragment<FragmentUpdateBlogBinding>() {
 
     override val bindingInflater: (LayoutInflater) -> ViewBinding

@@ -3,6 +3,7 @@ package com.blogapp.recyclerViewUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.*
 import com.blogapp.R
 import com.blogapp.databinding.ItemBlogListBinding
@@ -14,7 +15,19 @@ class BlogRvAdapter(
     private val onClickListener: OnClickListener? = null,
     private val requestManager: RequestManager
 ) :
-    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    PagingDataAdapter<BlogPost, BlogRvAdapter.BlogPostViewHolder>(DIFF_CALLBACK) {
+
+    companion object {
+        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<BlogPost>() {
+
+            override fun areItemsTheSame(oldItem: BlogPost, newItem: BlogPost) =
+                oldItem.primaryKey == newItem.primaryKey
+
+            override fun areContentsTheSame(oldItem: BlogPost, newItem: BlogPost) =
+                oldItem == newItem
+
+        }
+    }
 
     private val NO_MORE_RESULTS = -1
     private val BLOG_ITEM = 0
@@ -22,18 +35,10 @@ class BlogRvAdapter(
         NO_MORE_RESULTS, "", "", "", "", "", ""
     )
 
-    private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<BlogPost>() {
-
-        override fun areItemsTheSame(oldItem: BlogPost, newItem: BlogPost) =
-            oldItem.primaryKey == newItem.primaryKey
-
-        override fun areContentsTheSame(oldItem: BlogPost, newItem: BlogPost) = oldItem == newItem
-
-    }
-    private val differ = AsyncListDiffer(
-        BlogRecyclerChangeCallback(this),
-        AsyncDifferConfig.Builder(DIFF_CALLBACK).build()
-    )
+//    private val differ = AsyncListDiffer(
+//        BlogRecyclerChangeCallback(this),
+//        AsyncDifferConfig.Builder(DIFF_CALLBACK).build()
+//    )
 
     internal inner class BlogRecyclerChangeCallback(
         private val adapter: BlogRvAdapter
@@ -55,14 +60,14 @@ class BlogRvAdapter(
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BlogPostViewHolder {
         return when (viewType) {
-            NO_MORE_RESULTS -> {
-                GenericViewHolder(
-                    LayoutInflater.from(parent.context)
-                        .inflate(R.layout.item_no_more_results, parent, false)
-                )
-            }
+//            NO_MORE_RESULTS -> {
+//                GenericViewHolder(
+//                    LayoutInflater.from(parent.context)
+//                        .inflate(R.layout.item_no_more_results, parent, false)
+//                )
+//            }
             BLOG_ITEM -> {
                 BlogPostViewHolder(
                     ItemBlogListBinding.inflate(LayoutInflater.from(parent.context), parent, false),
@@ -76,30 +81,29 @@ class BlogRvAdapter(
         }
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        when (holder) {
-            is BlogPostViewHolder -> {
-                holder.bind(differ.currentList.get(position))
-            }
+    override fun onBindViewHolder(holder: BlogPostViewHolder, position: Int) {
+//        holder.bind(differ.currentList.get(position))
+        getItem(position)?.let {
+            holder.bind(it)
         }
     }
 
-    override fun getItemCount(): Int = differ.currentList.size
+//    override fun getItemCount(): Int = differ.currentList.size
 
-    override fun getItemViewType(position: Int): Int {
-        if (differ.currentList[position].primaryKey > -1) {
-            return BLOG_ITEM
-        }
-        return differ.currentList[position].primaryKey //-1
-    }
+//    override fun getItemViewType(position: Int): Int {
+//        if (differ.currentList[position].primaryKey > -1) {
+//            return BLOG_ITEM
+//        }
+//        return differ.currentList[position].primaryKey //-1
+//    }
 
-    fun submitList(list: List<BlogPost>?, isQueryExhausted: Boolean) {
-        val newList = list?.toMutableList()
-        if (isQueryExhausted) {
-            newList?.add(NO_MORE_RESULTS_BLOG_MARKER)
-        }
-        differ.submitList(list)
-    }
+//    fun submitList(list: List<BlogPost>?, isQueryExhausted: Boolean) {
+//        val newList = list?.toMutableList()
+//        if (isQueryExhausted) {
+//            newList?.add(NO_MORE_RESULTS_BLOG_MARKER)
+//        }
+//        differ.submitList(list)
+//    }
 
     class BlogPostViewHolder
     constructor(
@@ -121,6 +125,7 @@ class BlogRvAdapter(
             binding.blogUpdateDate.text = item.date_updated
         }
     }
+
 }
 
 interface OnClickListener {

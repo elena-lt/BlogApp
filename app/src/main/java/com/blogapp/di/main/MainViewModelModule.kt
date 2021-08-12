@@ -7,6 +7,7 @@ import com.blogapp.ui.main.blogs.BlogViewModel
 import dagger.Binds
 import dagger.Module
 import dagger.multibindings.IntoMap
+import kotlinx.coroutines.InternalCoroutinesApi
 
 @Module
 abstract class MainViewModelModule {
@@ -16,6 +17,7 @@ abstract class MainViewModelModule {
     @ViewModelKey(AccountViewModel::class)
     abstract fun bindAccountViewModel(accountViewModel: AccountViewModel): ViewModel
 
+    @InternalCoroutinesApi
     @Binds
     @IntoMap
     @ViewModelKey(BlogViewModel::class)

@@ -12,8 +12,10 @@ import com.blogapp.ui.DataStateChangeListener
 import com.blogapp.ui.ViewModelProviderFactory
 import com.bumptech.glide.RequestManager
 import dagger.android.support.DaggerFragment
+import kotlinx.coroutines.InternalCoroutinesApi
 import javax.inject.Inject
 
+@InternalCoroutinesApi
 abstract class BaseBlogFragment<out T : ViewBinding> : DaggerFragment() {
 
     @Inject

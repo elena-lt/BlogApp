@@ -10,8 +10,10 @@ import com.blogapp.R
 import com.blogapp.databinding.FragmentViewBlogBinding
 import com.blogapp.models.BlogPost
 import com.blogapp.models.mappers.BlogPostMapper
+import kotlinx.coroutines.InternalCoroutinesApi
 
 
+@InternalCoroutinesApi
 class ViewBlogFragment : BaseBlogFragment<FragmentViewBlogBinding>() {
 
     override val bindingInflater: (LayoutInflater) -> ViewBinding
@@ -34,16 +36,16 @@ class ViewBlogFragment : BaseBlogFragment<FragmentViewBlogBinding>() {
     }
 
     private fun subscribeToObservers() {
-        viewModel.dataState.observe(viewLifecycleOwner, { dataState ->
-            dataState?.let {
-                stateChangeListener.dataStateChange(it)
-            }
-        })
-
-        viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
-            viewState.viewBlogFields.blogPost?.let { blog ->
-                setBlogProperties(BlogPostMapper.toBlogPost(blog))
-            }
-        })
+//        viewModel.dataState.observe(viewLifecycleOwner, { dataState ->
+//            dataState?.let {
+//                stateChangeListener.dataStateChange(it)
+//            }
+//        })
+//
+//        viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
+//            viewState.viewBlogFields.blogPost?.let { blog ->
+//                setBlogProperties(BlogPostMapper.toBlogPost(blog))
+//            }
+//        })
     }
 }
