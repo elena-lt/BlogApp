@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.viewbinding.ViewBinding
 import com.blogapp.ui.DataStateChangeListener
 import com.blogapp.ui.ViewModelProviderFactory
+import com.blogapp.ui.main.blogs.viewModel.BlogViewModel
 import com.bumptech.glide.RequestManager
 import dagger.android.support.DaggerFragment
 import javax.inject.Inject

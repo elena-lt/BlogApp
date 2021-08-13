@@ -1,9 +1,16 @@
 package com.blogapp.ui.main.blogs
 
+import android.app.SearchManager
+import android.content.Context.SEARCH_SERVICE
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.widget.EditText
+import androidx.appcompat.widget.SearchView
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -17,7 +24,11 @@ import com.blogapp.recyclerViewUtils.BlogRvAdapter
 import com.blogapp.recyclerViewUtils.OnClickListener
 import com.blogapp.recyclerViewUtils.TopSpacingItemDecoration
 import com.blogapp.ui.main.blogs.state.BlogStateEvent
+import com.blogapp.ui.main.blogs.viewModel.*
+import com.blogapp.utils.ErrorPaginationDone
 import com.bumptech.glide.RequestManager
+import com.domain.utils.DataState
+import com.domain.viewState.BlogViewState
 import javax.inject.Inject
 
 class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
@@ -27,15 +38,30 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
     override val bindingInflater: (LayoutInflater) -> ViewBinding
         get() = FragmentBlogBinding::inflate
 
+    private lateinit var searchView: SearchView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setHasOptionsMenu(true)
 
-        execute()
         handleOnCLickEvents()
         initRecyclerAdapter()
         subscribeToObservers()
 
+        if (savedInstanceState == null) {
+            viewModel.loadFirstPage()
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        binding.blogPostRecyclerview.adapter = null
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        inflater.inflate(R.menu.search_menu, menu)
+        initSearchView(menu)
     }
 
     private fun execute() {
@@ -50,31 +76,54 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
     private fun subscribeToObservers() {
         viewModel.dataState.observe(viewLifecycleOwner, { dataState ->
             dataState?.let {
+                handlePagination(dataState)
                 stateChangeListener.dataStateChange(dataState)
-                dataState.data?.let {
-                    it.data?.let { event ->
-                        event.getContentIfNotHandled()?.let {
-                            Log.d(TAG, "subscribeToObservers: dataState: ${it}")
-                            viewModel.setBlogList(it.blogFields.blogList.map { blogPost ->
-                                BlogPostMapper.toBlogPost(blogPost)
-                            })
-                        }
-                    }
-                }
+
             }
         })
 
         viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
-            Log.d(TAG, "subscribeToObservers: ViewState: ${viewState}")
             viewState?.let {
                 rvAdapter.submitList(
                     list = viewState.blogFields.blogList.map {
                         BlogPostMapper.toBlogPost(it)
                     },
-                    isQueryExhausted = true
+                    isQueryExhausted = viewState.blogFields.isQueryExhausted
                 )
             }
         })
+    }
+
+    private fun onBlogSearchOrFilter() {
+        viewModel.loadFirstPage().let {
+            resetUI()
+        }
+    }
+
+    private fun resetUI() {
+        binding.blogPostRecyclerview.smoothScrollToPosition(0)
+        stateChangeListener.hideSoftKeyboard()
+    }
+
+    private fun handlePagination(dataState: DataState<BlogViewState>) {
+        dataState.data?.let {
+            it.data?.let {
+                it.getContentIfNotHandled()?.let { viewState ->
+                    viewModel.handleIncomingBlogListData(viewState)
+                }
+            }
+        }
+        //if invalid page -> api returns error mss "Invalid page"
+        dataState.error?.let { event ->
+            event.peekContent().response.message?.let { msg ->
+                if (ErrorPaginationDone.isPaginationDone(msg)) {
+                    event.getContentIfNotHandled()
+
+                    viewModel.setQueryExhausted(true)
+                }
+            }
+        }
+
     }
 
     private fun initRecyclerAdapter() {
@@ -93,10 +142,44 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
                     val lastPosition = layoutManager.findLastVisibleItemPosition()
                     if (lastPosition == rvAdapter.itemCount.minus(1)) {
                         Log.d(TAG, "onScrollStateChanged: attempting to load next page")
+                        viewModel.nextPage()
                     }
                 }
             })
             adapter = rvAdapter
+        }
+    }
+
+    private fun initSearchView(menu: Menu) {
+        activity?.apply {
+            val searchManager: SearchManager = getSystemService(SEARCH_SERVICE) as SearchManager
+            searchView = menu.findItem(R.id.action_search).actionView as SearchView
+            searchView.setSearchableInfo(searchManager.getSearchableInfo(componentName))
+            searchView.maxWidth = Integer.MAX_VALUE
+            searchView.setIconifiedByDefault(true)
+            searchView.isSubmitButtonEnabled = true
+        }
+
+        //PRESS ARROW ON PHONE KEYBOARD
+        val searchPlate = searchView.findViewById<EditText>(R.id.search_src_text)
+        searchPlate.setOnEditorActionListener { v, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_UNSPECIFIED
+                || actionId == EditorInfo.IME_ACTION_SEARCH
+            ) {
+                val searchQuery = v.text.toString()
+                viewModel.setQuery(searchQuery).let {
+                    onBlogSearchOrFilter()
+                }
+            }
+            true
+        }
+
+        //SEARCH BTN IN TOOLBAR CLICKED
+        searchView.findViewById<View>(R.id.search_go_btn).setOnClickListener {
+            val searchQuery = searchPlate.text.toString()
+            viewModel.setQuery(searchQuery).let{
+                onBlogSearchOrFilter()
+            }
         }
     }
 

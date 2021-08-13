@@ -16,7 +16,9 @@ import com.domain.usecases.main.account.GetAccountPropertiesUseCase
 import com.domain.usecases.main.account.UpdateAccountPropertiesUseCase
 import com.domain.utils.AbsentLiveData
 import com.domain.utils.DataState
+import com.domain.utils.Loading
 import com.domain.viewState.AccountViewState
+import com.domain.viewState.BlogViewState
 import javax.inject.Inject
 
 class AccountViewModel @Inject constructor(
@@ -47,7 +49,12 @@ class AccountViewModel @Inject constructor(
                 )
             }
             is None -> {
-                AbsentLiveData.create()
+                object : LiveData<DataState<AccountViewState>>() {
+                    override fun onActive() {
+                        super.onActive()
+                        value = DataState(error = null, loading = Loading(false), data = null)
+                    }
+                }
             }
         }
     }

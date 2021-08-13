@@ -12,6 +12,7 @@ import com.data.persistance.BlogPostDao
 import com.data.repository.JobManager
 import com.data.repository.NetworkBoundResource
 import com.data.session.SessionManager
+import com.data.utils.Const.PAGINATION_PAGE_SIZE
 import com.data.utils.GenericApiResponse
 import com.domain.utils.DataState
 import com.domain.viewState.BlogViewState
@@ -31,7 +32,8 @@ class BlogDataSourceImp @Inject constructor(
 ) : BlogDataSource, JobManager("BlogDataSourceImp") {
 
     override fun searchBlogPosts(
-        query: String
+        query: String,
+        page: Int
     ): LiveData<DataState<BlogViewState>> {
         val authToken: AuthToken? = sessionManager.cashedToken.value
 
@@ -46,6 +48,10 @@ class BlogDataSourceImp @Inject constructor(
             override suspend fun createCashRequestAndReturn() {
                 withContext(Main) {
                     result.addSource(loadFromCache()) { viewState ->
+                        viewState.blogFields.isQueryInProgress = false
+                        if (page * PAGINATION_PAGE_SIZE > viewState.blogFields.blogList.size){
+                            viewState.blogFields.isQueryExhausted = true
+                        }
                         onCompleteJob(DataState.data(viewState, null))
                     }
                 }
@@ -59,11 +65,11 @@ class BlogDataSourceImp @Inject constructor(
             }
 
             override fun createCall(): LiveData<GenericApiResponse<BlogSearchResponse>> {
-                return openApiMainService.searchListBlogPost("Token ${authToken!!.token}", query)
+                return openApiMainService.searchListBlogPost("Token ${authToken!!.token}", query, page)
             }
 
             override fun loadFromCache(): LiveData<BlogViewState> {
-                val blogPosts = blogPostDao.getAllBlogsPosts()
+                val blogPosts = blogPostDao.getAllBlogsPosts(query, page)
                 return Transformations.switchMap(blogPosts) {
                     object : LiveData<BlogViewState>() {
                         override fun onActive() {
@@ -72,7 +78,8 @@ class BlogDataSourceImp @Inject constructor(
                                 BlogViewState.BlogFields(
                                     blogList = it.map { blogPost ->
                                         BlogPostMapper.toBlogPostDomain(blogPost)
-                                    }
+
+                                    }, isQueryInProgress = true
                                 )
                             )
                         }

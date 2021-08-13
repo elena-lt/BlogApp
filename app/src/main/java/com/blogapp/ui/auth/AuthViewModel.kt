@@ -11,6 +11,7 @@ import com.domain.usecases.auth.LoginUseCase
 import com.domain.usecases.auth.RegisterUseCase
 import com.domain.utils.AbsentLiveData
 import com.domain.utils.DataState
+import com.domain.utils.Loading
 import com.domain.viewState.AuthViewState
 import com.domain.viewState.LoginFields
 import com.domain.viewState.RegistrationFields
@@ -40,7 +41,12 @@ class AuthViewModel @Inject constructor(
                 checkPrevAuthUser.invoke()
             }
             is None -> {
-                return AbsentLiveData.create()
+                object : LiveData<DataState<AuthViewState>>() {
+                    override fun onActive() {
+                        super.onActive()
+                        value = DataState(error = null, loading = Loading(false), data = null)
+                    }
+                }
             }
         }
     }

@@ -35,5 +35,6 @@ interface OpenApiMainService {
     fun searchListBlogPost(
         @Header("Authorization") authorization: String,
         @Query("search") query: String,
+        @Query ("page") page: Int,
     ): LiveData<GenericApiResponse<BlogSearchResponse>>
 }
