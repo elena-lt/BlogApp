@@ -6,5 +6,5 @@ import com.domain.viewState.BlogViewState
 
 interface BlogRepository {
 
-    fun searchBlogPosts(query: String, page: Int): LiveData<DataState<BlogViewState>>
+    fun searchBlogPosts(query: String, filterAndOrder: String, page: Int): LiveData<DataState<BlogViewState>>
 }

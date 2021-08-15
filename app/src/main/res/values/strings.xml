@@ -58,7 +58,7 @@
     <string name="filter_author">Author</string>
     <string name="filter_date">Date</string>
     <string name="asc_desc">Ascending or descending order</string>
-    <string name="author_or_date">Filter by author or date</string>
+    <string name="filter_by_date">Filter by date</string>
     <string name="filter_options">Filter options</string>
     <string name="publish">Publish</string>
     <string name="are_you_sure">Are you sure?</string>
@@ -71,4 +71,6 @@
     <string name="change_image">Change image</string>
     <string name="write_some_content">Write some content...</string>
     <string name="no_more_results">No more results...</string>
+    <string name="cancel">Cancel</string>
+    <string name="apply">Apply</string>
 </resources>

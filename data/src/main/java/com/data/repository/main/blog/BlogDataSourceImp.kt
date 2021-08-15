@@ -9,6 +9,7 @@ import com.data.models.BlogSearchResponse
 import com.data.models.mappers.BlogPostMapper
 import com.data.network.main.OpenApiMainService
 import com.data.persistance.BlogPostDao
+import com.data.persistance.returnOrderedBlogQuery
 import com.data.repository.JobManager
 import com.data.repository.NetworkBoundResource
 import com.data.session.SessionManager
@@ -33,7 +34,8 @@ class BlogDataSourceImp @Inject constructor(
 
     override fun searchBlogPosts(
         query: String,
-        page: Int
+        page: Int,
+        filterAndOrder: String
     ): LiveData<DataState<BlogViewState>> {
         val authToken: AuthToken? = sessionManager.cashedToken.value
 
@@ -49,7 +51,7 @@ class BlogDataSourceImp @Inject constructor(
                 withContext(Main) {
                     result.addSource(loadFromCache()) { viewState ->
                         viewState.blogFields.isQueryInProgress = false
-                        if (page * PAGINATION_PAGE_SIZE > viewState.blogFields.blogList.size){
+                        if (page * PAGINATION_PAGE_SIZE > viewState.blogFields.blogList.size) {
                             viewState.blogFields.isQueryExhausted = true
                         }
                         onCompleteJob(DataState.data(viewState, null))
@@ -65,11 +67,13 @@ class BlogDataSourceImp @Inject constructor(
             }
 
             override fun createCall(): LiveData<GenericApiResponse<BlogSearchResponse>> {
-                return openApiMainService.searchListBlogPost("Token ${authToken!!.token}", query, page)
+                return openApiMainService.searchListBlogPost(
+                    "Token ${authToken!!.token}", query, filterAndOrder, page
+                )
             }
 
             override fun loadFromCache(): LiveData<BlogViewState> {
-                val blogPosts = blogPostDao.getAllBlogsPosts(query, page)
+                val blogPosts = blogPostDao.returnOrderedBlogQuery(query, filterAndOrder, page)
                 return Transformations.switchMap(blogPosts) {
                     object : LiveData<BlogViewState>() {
                         override fun onActive() {
@@ -98,7 +102,7 @@ class BlogDataSourceImp @Inject constructor(
                                         "AppDebug",
                                         "updateLocalDb: inserting blog: $blogPost"
                                     )
-                                    blogPostDao.insertBlogPost(blogPost)
+                                    blogPostDao.insert(blogPost)
                                 }
 
                             } catch (e: Exception) {

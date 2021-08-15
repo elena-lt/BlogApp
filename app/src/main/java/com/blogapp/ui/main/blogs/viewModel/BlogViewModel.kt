@@ -19,7 +19,7 @@ class BlogViewModel @Inject constructor(
     override fun handleStateEvent(stateEvent: BlogStateEvent): LiveData<DataState<BlogViewState>> {
         return when (stateEvent) {
             is BlogStateEvent.BlogSearchEvent -> {
-                searchBlogPost.invoke(getSearchQuery(), getPage())
+                searchBlogPost.invoke(getSearchQuery(), getFilter() + getOrder(), getPage())
             }
             is BlogStateEvent.CheckAuthorOfTheBlogPost -> {
                 AbsentLiveData.create()

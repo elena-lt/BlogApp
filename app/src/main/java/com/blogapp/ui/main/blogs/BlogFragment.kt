@@ -10,10 +10,12 @@ import android.view.MenuInflater
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.viewbinding.ViewBinding
 import com.blogapp.R
 
@@ -26,10 +28,8 @@ import com.blogapp.recyclerViewUtils.TopSpacingItemDecoration
 import com.blogapp.ui.main.blogs.state.BlogStateEvent
 import com.blogapp.ui.main.blogs.viewModel.*
 import com.blogapp.utils.ErrorPaginationDone
-import com.bumptech.glide.RequestManager
 import com.domain.utils.DataState
 import com.domain.viewState.BlogViewState
-import javax.inject.Inject
 
 class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
 
@@ -42,9 +42,10 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        (activity as AppCompatActivity).supportActionBar?.setDisplayShowTitleEnabled(false)
         setHasOptionsMenu(true)
 
-        handleOnCLickEvents()
+        handleOnCLickAndRefreshEvents()
         initRecyclerAdapter()
         subscribeToObservers()
 
@@ -69,8 +70,14 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
         viewModel.setStateEvent(BlogStateEvent.BlogSearchEvent)
     }
 
-    private fun handleOnCLickEvents() {
-
+    private fun handleOnCLickAndRefreshEvents() {
+        binding.swipeRefresh.setOnRefreshListener {
+            SwipeRefreshLayout.OnRefreshListener {
+                Log.d(TAG, "handleOnCLickAndRefreshEvents: refreshing......")
+//                binding.swipeRefresh.isRefreshing = false
+                onBlogSearchOrFilter()
+            }
+        }
     }
 
     private fun subscribeToObservers() {
@@ -177,7 +184,7 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
         //SEARCH BTN IN TOOLBAR CLICKED
         searchView.findViewById<View>(R.id.search_go_btn).setOnClickListener {
             val searchQuery = searchPlate.text.toString()
-            viewModel.setQuery(searchQuery).let{
+            viewModel.setQuery(searchQuery).let {
                 onBlogSearchOrFilter()
             }
         }
@@ -187,5 +194,4 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
         viewModel.setBlogPost(item)
         findNavController().navigate(R.id.action_blogFragment_to_viewBlogFragment)
     }
-
 }

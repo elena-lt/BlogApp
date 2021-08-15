@@ -24,3 +24,15 @@ fun BlogViewModel.getSearchQuery(): String{
       return it.blogFields.searchQuery
     }
 }
+
+fun BlogViewModel.getFilter(): String {
+    getCurrentViewStateOrNew().let{
+        return it.blogFields.filter
+    }
+}
+
+fun BlogViewModel.getOrder(): String {
+    getCurrentViewStateOrNew().let{
+        return it.blogFields.order
+    }
+}
