@@ -1,15 +1,17 @@
 package com.blogapp.ui.main.blogs
 
 import android.os.Bundle
+import android.view.*
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import androidx.navigation.fragment.findNavController
 import androidx.viewbinding.ViewBinding
 import com.blogapp.R
 import com.blogapp.databinding.FragmentViewBlogBinding
 import com.blogapp.models.BlogPost
 import com.blogapp.models.mappers.BlogPostMapper
+import com.blogapp.ui.main.blogs.state.BlogStateEvent
+import com.blogapp.ui.main.blogs.viewModel.isAuthorOfBlogPost
+import com.blogapp.ui.main.blogs.viewModel.setIsAuthorOfBlogPost
 
 
 class ViewBlogFragment : BaseBlogFragment<FragmentViewBlogBinding>() {
@@ -19,7 +21,9 @@ class ViewBlogFragment : BaseBlogFragment<FragmentViewBlogBinding>() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setHasOptionsMenu(true)
 
+        checkAuthorOfBlogPost()
         subscribeToObservers()
     }
 
@@ -37,6 +41,11 @@ class ViewBlogFragment : BaseBlogFragment<FragmentViewBlogBinding>() {
         viewModel.dataState.observe(viewLifecycleOwner, { dataState ->
             dataState?.let {
                 stateChangeListener.dataStateChange(it)
+                dataState.data?.let { data ->
+                    data.data?.getContentIfNotHandled()?.let { viewState ->
+                        viewModel.setIsAuthorOfBlogPost(viewState.viewBlogFields.isAuthorOfBlogPost)
+                    }
+                }
             }
         })
 
@@ -44,6 +53,41 @@ class ViewBlogFragment : BaseBlogFragment<FragmentViewBlogBinding>() {
             viewState.viewBlogFields.blogPost?.let { blog ->
                 setBlogProperties(BlogPostMapper.toBlogPost(blog))
             }
+
+            if (viewState.viewBlogFields.isAuthorOfBlogPost) {
+                adaptViewToAuthorMode()
+            }
         })
+    }
+
+    private fun checkAuthorOfBlogPost() {
+        viewModel.setStateEvent(BlogStateEvent.CheckAuthorOfTheBlogPost)
+    }
+
+    private fun adaptViewToAuthorMode() {
+
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        if (viewModel.isAuthorOfBlogPost()) {
+            inflater.inflate(R.menu.edit_blogpost_menu, menu)
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (viewModel.isAuthorOfBlogPost()) {
+            when (item.itemId) {
+                R.id.edit -> {
+                    navigateToUpdateBlogFragment()
+                    return true
+                }
+            }
+        }
+
+        return super.onOptionsItemSelected(item)
+    }
+
+    private fun navigateToUpdateBlogFragment() {
+        findNavController().navigate(R.id.action_viewBlogFragment_to_updateBlogFragment)
     }
 }

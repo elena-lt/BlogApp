@@ -6,6 +6,7 @@ import com.blogapp.models.BlogPost
 import com.blogapp.models.mappers.BlogPostMapper
 import com.blogapp.ui.base.BaseViewModel
 import com.blogapp.ui.main.blogs.state.BlogStateEvent
+import com.domain.usecases.main.blog.CheckAuthorOfBlogPostUseCase
 import com.domain.usecases.main.blog.SearchBlogPostsUseCase
 import com.domain.utils.AbsentLiveData
 import com.domain.utils.DataState
@@ -14,7 +15,8 @@ import com.domain.viewState.BlogViewState
 import javax.inject.Inject
 
 class BlogViewModel @Inject constructor(
-    private val searchBlogPost: SearchBlogPostsUseCase
+    private val searchBlogPost: SearchBlogPostsUseCase,
+    private val checkAuthorOfBlogPost: CheckAuthorOfBlogPostUseCase
 ) : BaseViewModel<BlogStateEvent, BlogViewState>() {
 
     override fun handleStateEvent(stateEvent: BlogStateEvent): LiveData<DataState<BlogViewState>> {
@@ -23,7 +25,7 @@ class BlogViewModel @Inject constructor(
                 searchBlogPost.invoke(getSearchQuery(), getOrder()+ getFilter() , getPage())
             }
             is BlogStateEvent.CheckAuthorOfTheBlogPost -> {
-                AbsentLiveData.create()
+                checkAuthorOfBlogPost.invoke(getSlug())
             }
 
             is BlogStateEvent.None -> {

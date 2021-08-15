@@ -19,20 +19,34 @@ fun BlogViewModel.getPage(): Int {
     }
 }
 
-fun BlogViewModel.getSearchQuery(): String{
-    getCurrentViewStateOrNew().let{
-      return it.blogFields.searchQuery
+fun BlogViewModel.getSearchQuery(): String {
+    getCurrentViewStateOrNew().let {
+        return it.blogFields.searchQuery
     }
 }
 
 fun BlogViewModel.getFilter(): String {
-    getCurrentViewStateOrNew().let{
+    getCurrentViewStateOrNew().let {
         return it.blogFields.filter
     }
 }
 
 fun BlogViewModel.getOrder(): String {
-    getCurrentViewStateOrNew().let{
+    getCurrentViewStateOrNew().let {
         return it.blogFields.order
+    }
+}
+
+fun BlogViewModel.getSlug(): String {
+    getCurrentViewStateOrNew().let {
+        return it.viewBlogFields.blogPost?.let {
+            it.slug
+        } ?: ""
+    }
+}
+
+fun BlogViewModel.isAuthorOfBlogPost(): Boolean {
+    getCurrentViewStateOrNew().let {
+        return it.viewBlogFields.isAuthorOfBlogPost
     }
 }

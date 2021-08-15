@@ -10,6 +10,13 @@ class BlogRepositoryImp @Inject constructor(
     private val blogDataSource: BlogDataSource
 ) : BlogRepository {
 
-    override fun searchBlogPosts(query: String, filterAndOrder: String, page: Int): LiveData<DataState<BlogViewState>> =
+    override fun searchBlogPosts(
+        query: String,
+        filterAndOrder: String,
+        page: Int
+    ): LiveData<DataState<BlogViewState>> =
         blogDataSource.searchBlogPosts(query, page, filterAndOrder)
+
+    override fun checkAuthorOfBlogPost(slug: String): LiveData<DataState<BlogViewState>> =
+        blogDataSource.checkAuthorOfBlogPost(slug)
 }

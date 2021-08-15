@@ -7,4 +7,6 @@ import com.domain.viewState.BlogViewState
 interface BlogDataSource {
 
     fun searchBlogPosts(query: String, page: Int, filterAndOrder: String): LiveData<DataState<BlogViewState>>
+
+    fun checkAuthorOfBlogPost(slug: String): LiveData<DataState<BlogViewState>>
 }

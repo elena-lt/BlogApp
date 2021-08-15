@@ -5,6 +5,7 @@ import com.data.models.AccountProperties
 import com.data.models.BlogSearchResponse
 import com.data.models.GenericResponse
 import com.data.utils.GenericApiResponse
+import com.data.utils.LiveDataCallAdapterFactory
 import retrofit2.http.*
 
 interface OpenApiMainService {
@@ -38,4 +39,10 @@ interface OpenApiMainService {
         @Query("ordering") ordering: String,
         @Query("page") page: Int,
     ): LiveData<GenericApiResponse<BlogSearchResponse>>
+
+    @GET ("blog/{slug}/is_author")
+    fun isAuthor(
+        @Header("Authorization") authorization: String,
+        @Path ("slug") slug: String
+    ): LiveData<GenericApiResponse<GenericResponse>>
 }
