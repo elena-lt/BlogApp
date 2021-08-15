@@ -61,7 +61,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:checked="true"
             android:text="@string/filter_asc"
             android:textColor="#000"
             android:textSize="16sp" />
@@ -73,6 +72,7 @@
             android:layout_marginTop="20dp"
             android:text="@string/filter_desc"
             android:textColor="#000"
+            android:checked="true"
             android:textSize="16sp" />
 
     </RadioGroup>

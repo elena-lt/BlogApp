@@ -1,5 +1,6 @@
 package com.blogapp.ui.main.blogs.viewModel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import com.blogapp.models.BlogPost
 import com.blogapp.models.mappers.BlogPostMapper
@@ -19,7 +20,7 @@ class BlogViewModel @Inject constructor(
     override fun handleStateEvent(stateEvent: BlogStateEvent): LiveData<DataState<BlogViewState>> {
         return when (stateEvent) {
             is BlogStateEvent.BlogSearchEvent -> {
-                searchBlogPost.invoke(getSearchQuery(), getFilter() + getOrder(), getPage())
+                searchBlogPost.invoke(getSearchQuery(), getOrder()+ getFilter() , getPage())
             }
             is BlogStateEvent.CheckAuthorOfTheBlogPost -> {
                 AbsentLiveData.create()

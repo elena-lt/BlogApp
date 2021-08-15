@@ -4,12 +4,12 @@ import android.app.SearchManager
 import android.content.Context.SEARCH_SERVICE
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.View
+import android.view.*
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
+import android.widget.RadioButton
+import android.widget.RadioGroup
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.navigation.fragment.findNavController
@@ -17,6 +17,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.viewbinding.ViewBinding
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.customview.customView
+import com.afollestad.materialdialogs.customview.getCustomView
 import com.blogapp.R
 
 import com.blogapp.databinding.FragmentBlogBinding
@@ -188,6 +191,48 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
                 onBlogSearchOrFilter()
             }
         }
+    }
+
+    private fun showFilterOptions() {
+        activity?.let {
+            val dialog = MaterialDialog(it)
+                .noAutoDismiss()
+                .customView(R.layout.dialog_blog_filter)
+
+            val view = dialog.getCustomView()
+
+            //get selected order type
+            view.findViewById<TextView>(R.id.positive_button)?.setOnClickListener {
+                val selectedOrder = dialog.getCustomView().findViewById<RadioButton>(
+                    dialog.getCustomView()
+                        .findViewById<RadioGroup>(R.id.filter_group).checkedRadioButtonId
+                )
+
+                var order = ""
+                if (selectedOrder.text.toString() == getString(R.string.filter_asc)) order = "-"
+
+                viewModel.setOrder(order)
+                onBlogSearchOrFilter()
+                dialog.dismiss()
+            }
+
+            view.findViewById<TextView>(R.id.negative_button).setOnClickListener {
+                dialog.dismiss()
+
+            }
+            dialog.show()
+        }
+
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when(item.itemId){
+            R.id.action_filter_settings -> {
+                showFilterOptions()
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     override fun onItemSelected(position: Int, item: BlogPost) {

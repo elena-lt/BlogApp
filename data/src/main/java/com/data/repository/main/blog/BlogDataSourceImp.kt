@@ -98,10 +98,10 @@ class BlogDataSourceImp @Inject constructor(
                             try {
                                 //launch each insert as a separate job tp executed in parallel
                                 launch {
-                                    Log.d(
-                                        "AppDebug",
-                                        "updateLocalDb: inserting blog: $blogPost"
-                                    )
+//                                    Log.d(
+//                                        "AppDebug",
+//                                        "updateLocalDb: inserting blog: $blogPost"
+//                                    )
                                     blogPostDao.insert(blogPost)
                                 }
 

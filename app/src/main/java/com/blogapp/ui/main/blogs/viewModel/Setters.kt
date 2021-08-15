@@ -1,5 +1,6 @@
 package com.blogapp.ui.main.blogs.viewModel
 
+import android.util.Log
 import com.blogapp.models.BlogPost
 import com.blogapp.models.mappers.BlogPostMapper
 

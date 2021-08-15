@@ -2,6 +2,7 @@ package com.domain.viewState
 
 import com.domain.models.BlogPostDomain
 import com.domain.utils.Const.BLOG_ORDER_ASC
+import com.domain.utils.Const.BLOG_ORDER_DESC
 import com.domain.utils.Const.ORDER_BY_ASC_DATE_UPDATED
 
 data class BlogViewState(
@@ -20,7 +21,7 @@ data class BlogViewState(
         var isQueryInProgress: Boolean = false,
         var isQueryExhausted: Boolean = false,
         var filter: String = ORDER_BY_ASC_DATE_UPDATED,
-        var order: String = BLOG_ORDER_ASC
+        var order: String = BLOG_ORDER_DESC
     )
 
     data class ViewBlogFields(
