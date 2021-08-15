@@ -9,9 +9,13 @@ import com.data.repository.main.account.AccountRepositoryImp
 import com.data.repository.main.blog.BlogDataSource
 import com.data.repository.main.blog.BlogDataSourceImp
 import com.data.repository.main.blog.BlogRepositoryImp
+import com.data.repository.main.createBlogPost.CreateBlogDataSource
+import com.data.repository.main.createBlogPost.CreateBlogDataSourceImp
+import com.data.repository.main.createBlogPost.CreateBlogRepositoryImp
 import com.data.session.SessionManager
 import com.domain.repository.AccountRepository
 import com.domain.repository.BlogRepository
+import com.domain.repository.CreateBlogRepository
 import dagger.Module
 import dagger.Provides
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -52,5 +56,20 @@ class MainModule {
 
     @MainScope
     @Provides
-    fun provideBlogRepository(blogDataSource: BlogDataSource): BlogRepository = BlogRepositoryImp(blogDataSource)
+    fun provideBlogRepository(blogDataSource: BlogDataSource): BlogRepository =
+        BlogRepositoryImp(blogDataSource)
+
+    @MainScope
+    @Provides
+    fun provideCreateBlogDataSource(
+        openApiMainService: OpenApiMainService,
+        sessionManager: SessionManager,
+        blogPostDao: BlogPostDao
+    ): CreateBlogDataSource =
+        CreateBlogDataSourceImp(openApiMainService, sessionManager, blogPostDao)
+
+    @MainScope
+    @Provides
+    fun provideCreateBlogRepository(dataSource: CreateBlogDataSource): CreateBlogRepository =
+        CreateBlogRepositoryImp(dataSource)
 }
