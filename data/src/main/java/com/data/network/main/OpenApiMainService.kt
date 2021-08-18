@@ -2,10 +2,14 @@ package com.data.network.main
 
 import androidx.lifecycle.LiveData
 import com.data.models.AccountProperties
+import com.data.models.BlogCreateUpdateResponse
 import com.data.models.BlogSearchResponse
 import com.data.models.GenericResponse
 import com.data.utils.GenericApiResponse
 import com.data.utils.LiveDataCallAdapterFactory
+import okhttp3.MultipartBody
+import okhttp3.Request
+import okhttp3.RequestBody
 import retrofit2.http.*
 
 interface OpenApiMainService {
@@ -45,4 +49,20 @@ interface OpenApiMainService {
         @Header("Authorization") authorization: String,
         @Path ("slug") slug: String
     ): LiveData<GenericApiResponse<GenericResponse>>
+
+    @Multipart
+    @POST ("blog/create")
+    fun createBlogPost(
+        @Header("Authorization") authorization: String,
+        @Part ("title") title: RequestBody,
+        @Part ("body") body: RequestBody,
+        @Part  image: MultipartBody.Part?
+    ): LiveData<GenericApiResponse<BlogCreateUpdateResponse>>
+
+    @DELETE ("blog/{slug}/delete")
+    fun deleteBlogPost (
+        @Header("Authorization") authorization: String,
+        @Path ("slug") slug: String
+    ): LiveData<GenericApiResponse<GenericResponse>>
+
 }

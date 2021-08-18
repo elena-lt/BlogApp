@@ -1,24 +1,61 @@
 package com.blogapp.ui
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.view.Gravity
 import android.widget.TextView
 import android.widget.Toast
+import com.afollestad.materialdialogs.MaterialDialog
 import com.blogapp.R
 
 
-fun Context.displayToast(message: String) {
+fun Activity.displayToast(message: String) {
     Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 }
 
-fun Context.displayErrorDialog(message: String) {
-    AlertDialog.Builder(this).apply {
-        setTitle(R.string.text_error)
-        create()
+fun Activity.displayErrorDialog(errorMessage: String) {
+    MaterialDialog(this)
+        .show{
+            title(R.string.text_error)
+            message(text = errorMessage)
+            positiveButton(R.string.text_ok)
+        }
+}
+
+fun Activity.displaySuccessDialog(message: String) {
+    MaterialDialog(this)
+        .show{
+            title(R.string.text_success)
+            message(text = message)
+            positiveButton(R.string.text_ok)
+        }
+}
+
+fun Activity.displayInfoDialog(message: String){
+    MaterialDialog(this)
+        .show {
+            title(R.string.text_info)
+            message(text = message)
+            positiveButton(R.string.text_ok)
+        }
+}
+
+fun Activity.areYouSureDialog(message: String, callback: AreYouSureCallback){
+MaterialDialog(this)
+    .show {
+        title(R.string.are_you_sure)
+        message (text = message)
+        negativeButton (R.string.text_cancel){
+            callback.cancel()
+        }
+        positiveButton(R.string.text_yes){
+            callback.proceed()
+        }
     }
 }
 
-fun Context.displaySuccessDialog(message: String) {
-    //TODO()
+interface AreYouSureCallback {
+    fun proceed()
+    fun cancel()
 }

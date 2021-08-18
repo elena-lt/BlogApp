@@ -15,11 +15,16 @@ import com.data.repository.JobManager
 import com.data.repository.NetworkBoundResource
 import com.data.session.SessionManager
 import com.data.utils.Const.PAGINATION_PAGE_SIZE
+import com.data.utils.ErrorHandling.Companion.ERROR_UNKNOWN
 import com.data.utils.GenericApiResponse
 import com.data.utils.SuccessHandling.Companion.RESPONSE_HAS_PERMISSION_TO_EDIT
 import com.data.utils.SuccessHandling.Companion.RESPONSE_NO_PERMISSION_TO_EDIT
+import com.data.utils.SuccessHandling.Companion.SUCCESS_BLOG_DELETED
+import com.domain.models.BlogPostDomain
 import com.domain.utils.AbsentLiveData
 import com.domain.utils.DataState
+import com.domain.utils.Response
+import com.domain.utils.ResponseType
 import com.domain.viewState.BlogViewState
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
@@ -137,7 +142,8 @@ class BlogDataSourceImp @Inject constructor(
             shouldCancelIfNoInternet = true,
             shouldLoadFromCache = false
         ) {
-            override suspend fun createCashRequestAndReturn() {/*NO-OPS*/}
+            override suspend fun createCashRequestAndReturn() {/*NO-OPS*/
+            }
 
             override suspend fun handleApiSuccessResponse(response: GenericApiResponse.ApiSuccessResponse<GenericResponse>) {
                 withContext(Main) {
@@ -170,6 +176,60 @@ class BlogDataSourceImp @Inject constructor(
 
             override fun setJob(job: Job) {
                 addJob("searchBlogPosts", job)
+            }
+
+        }.asLiveData()
+    }
+
+    override fun deleteBlogPost(blogPost: BlogPostDomain): LiveData<DataState<BlogViewState>> {
+        val authToken: AuthToken? = sessionManager.cashedToken.value
+
+        return object : NetworkBoundResource<GenericResponse, BlogPostEntity, BlogViewState>(
+            isNetworkAvailable = sessionManager.isConnectedToInternet(),
+            isNetworkRequest = true,
+            shouldCancelIfNoInternet = true,
+            shouldLoadFromCache = false,
+        ) {
+            override suspend fun createCashRequestAndReturn() {
+                /*No-OPS*/
+            }
+
+            override suspend fun handleApiSuccessResponse(response: GenericApiResponse.ApiSuccessResponse<GenericResponse>) {
+                if (response.body.response == SUCCESS_BLOG_DELETED) {
+                    updateLocalDb(BlogPostMapper.toBlogPostData(blogPost))
+                } else {
+                    onCompleteJob(
+                        DataState.error(Response(ERROR_UNKNOWN, ResponseType.Dialog()))
+                    )
+                }
+            }
+
+            override fun createCall(): LiveData<GenericApiResponse<GenericResponse>> {
+                return openApiMainService.deleteBlogPost(
+                    "Token ${authToken?.token!!}",
+                    blogPost.slug
+                )
+            }
+
+            override fun loadFromCache(): LiveData<BlogViewState> {
+                /*No-OPS*/
+                return AbsentLiveData.create()
+            }
+
+            override suspend fun updateLocalDb(cacheObject: BlogPostEntity?) {
+                cacheObject?.let {
+                    blogPostDao.deleteBlogPost(it)
+                    onCompleteJob(
+                        DataState.data(
+                            null,
+                            response = Response(SUCCESS_BLOG_DELETED, ResponseType.Toast())
+                        )
+                    )
+                }
+            }
+
+            override fun setJob(job: Job) {
+                addJob("deleteBlogPost", job)
             }
 
         }.asLiveData()

@@ -64,3 +64,17 @@ fun BlogViewModel.setIsAuthorOfBlogPost(isAuthor: Boolean) {
     update.viewBlogFields.isAuthorOfBlogPost = isAuthor
     setViewState(update)
 }
+
+fun BlogViewModel.removeDeletedBlogPost() {
+    val update = getCurrentViewStateOrNew()
+    val list = update.blogFields.blogList.toMutableList()
+    for (i in 0 until list.size) {
+        if (list[i] == getBlogPost()) {
+            list.remove(getBlogPost())
+            break
+        }
+    }
+    setBlogList(list.map {
+        BlogPostMapper.toBlogPost(it)
+    })
+}

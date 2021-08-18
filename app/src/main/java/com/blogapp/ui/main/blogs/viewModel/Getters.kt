@@ -1,5 +1,7 @@
 package com.blogapp.ui.main.blogs.viewModel
 
+import com.domain.models.BlogPostDomain
+
 fun BlogViewModel.getIsQueryInProgress(): Boolean {
     getCurrentViewStateOrNew().let {
         return it.blogFields.isQueryInProgress
@@ -34,6 +36,14 @@ fun BlogViewModel.getFilter(): String {
 fun BlogViewModel.getOrder(): String {
     getCurrentViewStateOrNew().let {
         return it.blogFields.order
+    }
+}
+
+fun BlogViewModel.getBlogPost() : BlogPostDomain {
+    getCurrentViewStateOrNew().let{
+         it.viewBlogFields.blogPost?.let { blogPost ->
+             return blogPost
+        }?: return BlogPostDomain(-1, "", "", "", "", "1", "")
     }
 }
 

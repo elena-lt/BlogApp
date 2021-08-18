@@ -55,6 +55,9 @@ dependencies {
 
     //Material Dialogs
     implementation 'com.afollestad.material-dialogs:core:3.3.0'
+
+    //Image Cropper
+    implementation 'com.theartofdev.edmodo:android-image-cropper:2.8.+'
     
     //Navigation
     def nav_version = "2.4.0-alpha05"

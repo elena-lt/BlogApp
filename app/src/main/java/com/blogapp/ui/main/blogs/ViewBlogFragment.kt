@@ -9,9 +9,14 @@ import com.blogapp.R
 import com.blogapp.databinding.FragmentViewBlogBinding
 import com.blogapp.models.BlogPost
 import com.blogapp.models.mappers.BlogPostMapper
+import com.blogapp.ui.AreYouSureCallback
 import com.blogapp.ui.main.blogs.state.BlogStateEvent
 import com.blogapp.ui.main.blogs.viewModel.isAuthorOfBlogPost
+import com.blogapp.ui.main.blogs.viewModel.removeDeletedBlogPost
 import com.blogapp.ui.main.blogs.viewModel.setIsAuthorOfBlogPost
+import com.blogapp.utils.Const.SUCCESS_BLOG_DELETED
+import com.blogapp.utils.UIMessage
+import com.blogapp.utils.UIMessageType
 
 
 class ViewBlogFragment : BaseBlogFragment<FragmentViewBlogBinding>() {
@@ -23,8 +28,15 @@ class ViewBlogFragment : BaseBlogFragment<FragmentViewBlogBinding>() {
         super.onViewCreated(view, savedInstanceState)
         setHasOptionsMenu(true)
 
+        handleClickEvents()
         checkAuthorOfBlogPost()
         subscribeToObservers()
+    }
+
+    private fun handleClickEvents() {
+        binding.deleteButton.setOnClickListener {
+            confirmDeleteRequest()
+        }
     }
 
     private fun setBlogProperties(blogPost: BlogPost) {
@@ -45,7 +57,15 @@ class ViewBlogFragment : BaseBlogFragment<FragmentViewBlogBinding>() {
                     data.data?.getContentIfNotHandled()?.let { viewState ->
                         viewModel.setIsAuthorOfBlogPost(viewState.viewBlogFields.isAuthorOfBlogPost)
                     }
+
+                    data.response?.peekContent()?.let{response ->
+                        if(response.message == SUCCESS_BLOG_DELETED){
+                            viewModel.removeDeletedBlogPost()
+                            findNavController().popBackStack()
+                        }
+                    }
                 }
+
             }
         })
 
@@ -65,7 +85,32 @@ class ViewBlogFragment : BaseBlogFragment<FragmentViewBlogBinding>() {
     }
 
     private fun adaptViewToAuthorMode() {
+        activity?.invalidateOptionsMenu()
+        binding.deleteButton.visibility = View.VISIBLE
+        binding.deleteButton.isEnabled = true
+    }
 
+    private fun deleteBlogPost() {
+        viewModel.setStateEvent(BlogStateEvent.DeleteBlogStateEvent)
+    }
+
+    private fun confirmDeleteRequest() {
+        val callback: AreYouSureCallback = object : AreYouSureCallback {
+            override fun proceed() {
+                deleteBlogPost()
+            }
+
+            override fun cancel() {
+                /*no-ops*/
+            }
+        }
+
+        uiCommunicationListener.onUiMessageReceived(
+            UIMessage(
+                getString(R.string.are_you_sure_delete),
+                UIMessageType.AreYouSureDialog(callback)
+            )
+        )
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

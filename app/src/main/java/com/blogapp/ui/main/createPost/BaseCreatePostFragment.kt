@@ -6,9 +6,14 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.ViewModelProvider
 import androidx.viewbinding.ViewBinding
 import com.blogapp.ui.DataStateChangeListener
+import com.blogapp.ui.ViewModelProviderFactory
+import com.blogapp.ui.main.blogs.viewModel.BlogViewModel
+import com.bumptech.glide.RequestManager
 import dagger.android.support.DaggerFragment
+import javax.inject.Inject
 
 abstract class BaseCreateBlogFragment<out T : ViewBinding> : DaggerFragment() {
 
@@ -19,6 +24,14 @@ abstract class BaseCreateBlogFragment<out T : ViewBinding> : DaggerFragment() {
         get() = _binding as T
 
     lateinit var stateChangeListener: DataStateChangeListener
+
+    @Inject
+    lateinit var requestManager: RequestManager
+
+    @Inject
+    lateinit var providerFactory: ViewModelProviderFactory
+    lateinit var viewModel: CreateBlogPostViewModel
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -31,6 +44,11 @@ abstract class BaseCreateBlogFragment<out T : ViewBinding> : DaggerFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 //        cancelActiveJobs()
+
+        viewModel = activity?.run {
+            ViewModelProvider(this, providerFactory).get(CreateBlogPostViewModel::class.java)
+        } ?: throw Exception("Invalid activity")
+
     }
 
     override fun onAttach(context: Context) {

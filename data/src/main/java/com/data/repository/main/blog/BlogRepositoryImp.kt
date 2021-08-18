@@ -1,6 +1,7 @@
 package com.data.repository.main.blog
 
 import androidx.lifecycle.LiveData
+import com.domain.models.BlogPostDomain
 import com.domain.repository.BlogRepository
 import com.domain.utils.DataState
 import com.domain.viewState.BlogViewState
@@ -19,4 +20,6 @@ class BlogRepositoryImp @Inject constructor(
 
     override fun checkAuthorOfBlogPost(slug: String): LiveData<DataState<BlogViewState>> =
         blogDataSource.checkAuthorOfBlogPost(slug)
+
+    override fun deleteBlog(blogPost: BlogPostDomain): LiveData<DataState<BlogViewState>> = blogDataSource.deleteBlogPost(blogPost)
 }

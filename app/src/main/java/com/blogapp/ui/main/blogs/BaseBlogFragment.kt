@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.viewbinding.ViewBinding
 import com.blogapp.ui.DataStateChangeListener
+import com.blogapp.ui.UiCommunicationListener
 import com.blogapp.ui.ViewModelProviderFactory
 import com.blogapp.ui.main.blogs.viewModel.BlogViewModel
 import com.bumptech.glide.RequestManager
@@ -16,6 +17,7 @@ import dagger.android.support.DaggerFragment
 import javax.inject.Inject
 
 abstract class BaseBlogFragment<out T : ViewBinding> : DaggerFragment() {
+    val TAG: String = "AppDebug"
 
     @Inject
     lateinit var requestManager: RequestManager
@@ -24,13 +26,12 @@ abstract class BaseBlogFragment<out T : ViewBinding> : DaggerFragment() {
     lateinit var providerFactory: ViewModelProviderFactory
     lateinit var viewModel: BlogViewModel
 
-    val TAG: String = "AppDebug"
-
     private var _binding: ViewBinding? = null
     val binding: T
-        get() = _binding as T
+        get() = _binding!! as T
 
     lateinit var stateChangeListener: DataStateChangeListener
+    lateinit var uiCommunicationListener: UiCommunicationListener
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,7 +39,7 @@ abstract class BaseBlogFragment<out T : ViewBinding> : DaggerFragment() {
         savedInstanceState: Bundle?
     ): View? {
         _binding = bindingInflater(inflater)
-        return binding!!.root
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -57,13 +58,17 @@ abstract class BaseBlogFragment<out T : ViewBinding> : DaggerFragment() {
         } catch (e: ClassCastException) {
             Log.e(TAG, "$context must implement DataStateChangeListener")
         }
+
+        try {
+            uiCommunicationListener = context as UiCommunicationListener
+        } catch (e: ClassCastException) {
+            Log.e(TAG, "$context must implement DataStateChangeListener")
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        _binding?.let {
-            _binding = null
-        }
+        _binding = null
     }
 
     protected abstract val bindingInflater: (LayoutInflater) -> ViewBinding

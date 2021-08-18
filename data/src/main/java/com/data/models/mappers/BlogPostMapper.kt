@@ -16,4 +16,16 @@ object BlogPostMapper {
             bp.username
         )
     }
+
+    fun toBlogPostData(bp: BlogPostDomain): BlogPostEntity{
+        return BlogPostEntity(
+            bp.primaryKey,
+            bp.title,
+            bp.slug,
+            bp.body,
+            bp.image,
+            bp.date_updated,
+            bp.username
+        )
+    }
 }

@@ -22,6 +22,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import retrofit2.Retrofit
 
 @Module
+@InternalCoroutinesApi
 class MainModule {
 
     @MainScope
@@ -29,7 +30,6 @@ class MainModule {
     fun provideOpenApiMainService(retrofit: Retrofit) =
         retrofit.create(OpenApiMainService::class.java)
 
-    @InternalCoroutinesApi
     @MainScope
     @Provides
     fun provideAccountRepository(
@@ -45,7 +45,6 @@ class MainModule {
     @Provides
     fun provideBlogPostDao(database: AppDatabase): BlogPostDao = database.getBlogPostDao()
 
-    @InternalCoroutinesApi
     @MainScope
     @Provides
     fun provideBlogDataSource(

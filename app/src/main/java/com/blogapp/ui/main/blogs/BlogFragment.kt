@@ -58,8 +58,8 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
     }
 
     override fun onDestroy() {
+//        binding.blogPostRecyclerview.adapter = null
         super.onDestroy()
-        binding.blogPostRecyclerview.adapter = null
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

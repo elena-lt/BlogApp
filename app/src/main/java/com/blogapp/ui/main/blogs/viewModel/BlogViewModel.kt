@@ -6,7 +6,9 @@ import com.blogapp.models.BlogPost
 import com.blogapp.models.mappers.BlogPostMapper
 import com.blogapp.ui.base.BaseViewModel
 import com.blogapp.ui.main.blogs.state.BlogStateEvent
+import com.blogapp.ui.main.blogs.state.BlogStateEvent.*
 import com.domain.usecases.main.blog.CheckAuthorOfBlogPostUseCase
+import com.domain.usecases.main.blog.DeleteBlogPostUseCase
 import com.domain.usecases.main.blog.SearchBlogPostsUseCase
 import com.domain.utils.AbsentLiveData
 import com.domain.utils.DataState
@@ -16,19 +18,24 @@ import javax.inject.Inject
 
 class BlogViewModel @Inject constructor(
     private val searchBlogPost: SearchBlogPostsUseCase,
-    private val checkAuthorOfBlogPost: CheckAuthorOfBlogPostUseCase
+    private val checkAuthorOfBlogPost: CheckAuthorOfBlogPostUseCase,
+    private val deleteBlogPost: DeleteBlogPostUseCase
 ) : BaseViewModel<BlogStateEvent, BlogViewState>() {
 
     override fun handleStateEvent(stateEvent: BlogStateEvent): LiveData<DataState<BlogViewState>> {
         return when (stateEvent) {
-            is BlogStateEvent.BlogSearchEvent -> {
+            is BlogSearchEvent -> {
                 searchBlogPost.invoke(getSearchQuery(), getOrder()+ getFilter() , getPage())
             }
-            is BlogStateEvent.CheckAuthorOfTheBlogPost -> {
+            is CheckAuthorOfTheBlogPost -> {
                 checkAuthorOfBlogPost.invoke(getSlug())
             }
+            is DeleteBlogStateEvent -> {
+                deleteBlogPost.invoke(getBlogPost())
+            }
 
-            is BlogStateEvent.None -> {
+
+            is None -> {
                 object : LiveData<DataState<BlogViewState>>() {
                     override fun onActive() {
                         super.onActive()
