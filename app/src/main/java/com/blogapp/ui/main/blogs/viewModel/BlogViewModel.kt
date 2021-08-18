@@ -10,6 +10,7 @@ import com.blogapp.ui.main.blogs.state.BlogStateEvent.*
 import com.domain.usecases.main.blog.CheckAuthorOfBlogPostUseCase
 import com.domain.usecases.main.blog.DeleteBlogPostUseCase
 import com.domain.usecases.main.blog.SearchBlogPostsUseCase
+import com.domain.usecases.main.blog.UpdateBlogPostUseCase
 import com.domain.utils.AbsentLiveData
 import com.domain.utils.DataState
 import com.domain.utils.Loading
@@ -19,6 +20,7 @@ import javax.inject.Inject
 class BlogViewModel @Inject constructor(
     private val searchBlogPost: SearchBlogPostsUseCase,
     private val checkAuthorOfBlogPost: CheckAuthorOfBlogPostUseCase,
+    private val updateBlogPost: UpdateBlogPostUseCase,
     private val deleteBlogPost: DeleteBlogPostUseCase
 ) : BaseViewModel<BlogStateEvent, BlogViewState>() {
 
@@ -33,7 +35,9 @@ class BlogViewModel @Inject constructor(
             is DeleteBlogStateEvent -> {
                 deleteBlogPost.invoke(getBlogPost())
             }
-
+            is UpdateBlogStateEvent -> {
+                updateBlogPost.invoke(getSlug(),stateEvent.title, stateEvent.body, stateEvent.image)
+            }
 
             is None -> {
                 object : LiveData<DataState<BlogViewState>>() {

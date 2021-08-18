@@ -1,5 +1,6 @@
 package com.blogapp.ui.main.blogs.viewModel
 
+import android.net.Uri
 import com.domain.models.BlogPostDomain
 
 fun BlogViewModel.getIsQueryInProgress(): Boolean {
@@ -59,4 +60,13 @@ fun BlogViewModel.isAuthorOfBlogPost(): Boolean {
     getCurrentViewStateOrNew().let {
         return it.viewBlogFields.isAuthorOfBlogPost
     }
+}
+
+fun BlogViewModel.getUpdatedBogUri(): Uri? {
+    getCurrentViewStateOrNew().let {
+        it.updateBlogFields.imageUri?.let {
+            return it
+        }
+    }
+    return null
 }

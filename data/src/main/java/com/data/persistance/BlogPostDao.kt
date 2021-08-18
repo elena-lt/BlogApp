@@ -49,6 +49,13 @@ interface BlogPostDao {
         pageSize: Int = PAGINATION_PAGE_SIZE
     ): LiveData<List<BlogPostEntity>>
 
+    @Query ("""
+        UPDATE blog_post SET title = :title, 
+        body = :body, image = :image
+        WHERE primary_key = :primaryKey
+    """)
+    fun updateBlogPost(primaryKey: Int, title: String, body: String, image: String)
+
     @Delete
     suspend fun deleteBlogPost(blogPost: BlogPostEntity)
 

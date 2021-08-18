@@ -236,7 +236,7 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
     }
 
     override fun onItemSelected(position: Int, item: BlogPost) {
-        viewModel.setBlogPost(item)
+        viewModel.setBlogPost(BlogPostMapper.toBlogPostDomain(item))
         findNavController().navigate(R.id.action_blogFragment_to_viewBlogFragment)
     }
 }

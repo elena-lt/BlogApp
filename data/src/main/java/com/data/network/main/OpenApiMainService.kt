@@ -59,6 +59,16 @@ interface OpenApiMainService {
         @Part  image: MultipartBody.Part?
     ): LiveData<GenericApiResponse<BlogCreateUpdateResponse>>
 
+    @Multipart
+    @PUT ("blog/{slug}/update")
+    fun updateBlogPost(
+        @Header("Authorization") authorization: String,
+        @Path ("slug") slug: String,
+        @Part ("title") title: RequestBody,
+        @Part ("body") body: RequestBody,
+        @Part  image: MultipartBody.Part?
+    ): LiveData<GenericApiResponse<BlogCreateUpdateResponse>>
+
     @DELETE ("blog/{slug}/delete")
     fun deleteBlogPost (
         @Header("Authorization") authorization: String,

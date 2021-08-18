@@ -1,5 +1,6 @@
 package com.domain.viewState
 
+import android.net.Uri
 import com.domain.models.BlogPostDomain
 import com.domain.utils.Const.BLOG_ORDER_ASC
 import com.domain.utils.Const.BLOG_ORDER_DESC
@@ -10,9 +11,10 @@ data class BlogViewState(
     val blogFields: BlogFields = BlogFields(),
 
     //viewBlog fragment
-    val viewBlogFields: ViewBlogFields = ViewBlogFields()
+    val viewBlogFields: ViewBlogFields = ViewBlogFields(),
 
-    //updateBlogFragment vars
+        //updateBlogFragment vars
+    var updateBlogFields: UpdateBlogFields = UpdateBlogFields()
 ) {
     data class BlogFields(
         var blogList: List<BlogPostDomain> = ArrayList<BlogPostDomain>(),
@@ -27,5 +29,11 @@ data class BlogViewState(
     data class ViewBlogFields(
         var blogPost: BlogPostDomain? = null,
         var isAuthorOfBlogPost: Boolean = false,
+    )
+
+    data class UpdateBlogFields(
+        var blogTitle: String? = null,
+        var blogBody: String? = null,
+        var imageUri: Uri? = null
     )
 }

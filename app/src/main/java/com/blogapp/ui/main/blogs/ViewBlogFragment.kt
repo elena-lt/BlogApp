@@ -2,6 +2,7 @@ package com.blogapp.ui.main.blogs
 
 import android.os.Bundle
 import android.view.*
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.viewbinding.ViewBinding
@@ -11,9 +12,7 @@ import com.blogapp.models.BlogPost
 import com.blogapp.models.mappers.BlogPostMapper
 import com.blogapp.ui.AreYouSureCallback
 import com.blogapp.ui.main.blogs.state.BlogStateEvent
-import com.blogapp.ui.main.blogs.viewModel.isAuthorOfBlogPost
-import com.blogapp.ui.main.blogs.viewModel.removeDeletedBlogPost
-import com.blogapp.ui.main.blogs.viewModel.setIsAuthorOfBlogPost
+import com.blogapp.ui.main.blogs.viewModel.*
 import com.blogapp.utils.Const.SUCCESS_BLOG_DELETED
 import com.blogapp.utils.UIMessage
 import com.blogapp.utils.UIMessageType
@@ -58,8 +57,8 @@ class ViewBlogFragment : BaseBlogFragment<FragmentViewBlogBinding>() {
                         viewModel.setIsAuthorOfBlogPost(viewState.viewBlogFields.isAuthorOfBlogPost)
                     }
 
-                    data.response?.peekContent()?.let{response ->
-                        if(response.message == SUCCESS_BLOG_DELETED){
+                    data.response?.peekContent()?.let { response ->
+                        if (response.message == SUCCESS_BLOG_DELETED) {
                             viewModel.removeDeletedBlogPost()
                             findNavController().popBackStack()
                         }
@@ -133,6 +132,11 @@ class ViewBlogFragment : BaseBlogFragment<FragmentViewBlogBinding>() {
     }
 
     private fun navigateToUpdateBlogFragment() {
+        viewModel.setUpdatedBlogFields(
+            viewModel.getBlogPost().title,
+            viewModel.getBlogPost().body,
+            viewModel.getBlogPost().image.toUri(),
+            )
         findNavController().navigate(R.id.action_viewBlogFragment_to_updateBlogFragment)
     }
 }

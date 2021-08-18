@@ -1,8 +1,9 @@
 package com.blogapp.ui.main.blogs.viewModel
 
-import android.util.Log
+import android.net.Uri
 import com.blogapp.models.BlogPost
 import com.blogapp.models.mappers.BlogPostMapper
+import com.domain.models.BlogPostDomain
 
 fun BlogViewModel.setQuery(query: String) {
     val update = getCurrentViewStateOrNew()
@@ -19,9 +20,9 @@ fun BlogViewModel.setBlogList(blogList: List<BlogPost>) {
     setViewState(update)
 }
 
-fun BlogViewModel.setBlogPost(blogPost: BlogPost) {
+fun BlogViewModel.setBlogPost(blogPost: BlogPostDomain) {
     val update = getCurrentViewStateOrNew()
-    update.viewBlogFields.blogPost = BlogPostMapper.toBlogPostDomain(blogPost)
+    update.viewBlogFields.blogPost = blogPost
     setViewState(update)
 }
 
@@ -77,4 +78,41 @@ fun BlogViewModel.removeDeletedBlogPost() {
     setBlogList(list.map {
         BlogPostMapper.toBlogPost(it)
     })
+}
+
+fun BlogViewModel.setUpdatedBlogFields(
+    title: String?,
+    body: String?,
+    imageUri: Uri?
+) {
+    val update = getCurrentViewStateOrNew()
+    val updatedBlogFields = update.updateBlogFields
+    title?.let { updatedBlogFields.blogTitle = it }
+    body?.let { updatedBlogFields.blogBody = it }
+    imageUri?.let { updatedBlogFields.imageUri = it }
+    update.updateBlogFields = updatedBlogFields
+    setViewState(update)
+}
+
+fun BlogViewModel.updateListItem(newBlogPost: BlogPostDomain) {
+    val update = getCurrentViewStateOrNew()
+    val list = update.blogFields.blogList.toMutableList()
+    for (i in 0 until list.size) {
+        if (list[i].primaryKey == getBlogPost().primaryKey) {
+            list[i] = newBlogPost
+            break
+        }
+    }
+    update.blogFields.blogList = list
+    setViewState(update)
+}
+
+fun BlogViewModel.onBlogPostUpdateSuccess(blogPost: BlogPostDomain) {
+    setUpdatedBlogFields(
+        blogPost.title,
+        blogPost.body,
+        null
+    )
+    setBlogPost(blogPost) //update ViewBlogFragment
+    updateListItem(blogPost) //update list in BlogFragment
 }

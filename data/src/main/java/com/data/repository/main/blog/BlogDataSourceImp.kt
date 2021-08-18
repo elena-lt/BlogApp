@@ -1,12 +1,10 @@
 package com.data.repository.main.blog
 
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Transformations
-import com.data.models.AuthToken
-import com.data.models.BlogPostEntity
-import com.data.models.BlogSearchResponse
-import com.data.models.GenericResponse
+import com.data.models.*
 import com.data.models.mappers.BlogPostMapper
 import com.data.network.main.OpenApiMainService
 import com.data.persistance.BlogPostDao
@@ -32,6 +30,10 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import java.io.File
 import javax.inject.Inject
 
 @InternalCoroutinesApi
@@ -176,6 +178,88 @@ class BlogDataSourceImp @Inject constructor(
 
             override fun setJob(job: Job) {
                 addJob("searchBlogPosts", job)
+            }
+
+        }.asLiveData()
+    }
+
+    override fun updateBlogPost(
+        slug: String,
+        blogTitle: String,
+        blogBody: String,
+        imageUri: Uri
+    ): LiveData<DataState<BlogViewState>> {
+        val authToken: AuthToken? = sessionManager.cashedToken.value
+
+        return object :
+            NetworkBoundResource<BlogCreateUpdateResponse, BlogPostEntity, BlogViewState>(
+                isNetworkAvailable = sessionManager.isConnectedToInternet(),
+                isNetworkRequest = true,
+                shouldCancelIfNoInternet = true,
+                shouldLoadFromCache = false
+            ) {
+            override suspend fun createCashRequestAndReturn() {
+                /*no-ops*/
+            }
+
+            override suspend fun handleApiSuccessResponse(response: GenericApiResponse.ApiSuccessResponse<BlogCreateUpdateResponse>) {
+                val updatedBlogPost = BlogPostEntity(
+                    response.body.pk,
+                    response.body.title,
+                    response.body.slug,
+                    response.body.body,
+                    response.body.image,
+                    response.body.date_updated,
+                    response.body.username,
+                )
+                updateLocalDb(updatedBlogPost)
+
+                withContext(Main) {
+                    onCompleteJob(
+                        DataState.data(
+                            data = BlogViewState(
+                                viewBlogFields = BlogViewState.ViewBlogFields(
+                                    BlogPostMapper.toBlogPostDomain(updatedBlogPost),
+
+                                    )
+                            ),
+                            response = Response(response.body.response, ResponseType.Toast())
+                        )
+                    )
+
+                }
+            }
+
+            override fun createCall(): LiveData<GenericApiResponse<BlogCreateUpdateResponse>> {
+                val titleRb = RequestBody.create(MediaType.parse("text/plain"), blogTitle)
+                val bodyRb = RequestBody.create(MediaType.parse("text/plain"), blogBody)
+
+                val imageFile = imageUri.path?.let { File(it) }
+                val imageRequestBody = RequestBody.create(MediaType.parse("image/*"), imageFile)
+                val imageMultipartBody =
+                    MultipartBody.Part.createFormData("image", imageFile?.name, imageRequestBody)
+                return openApiMainService.updateBlogPost(
+                    "Token ${authToken?.token!!}",
+                    slug,
+                    titleRb,
+                    bodyRb,
+                    imageMultipartBody
+                )
+            }
+
+            override fun loadFromCache(): LiveData<BlogViewState> {
+                /*no-ops*/
+                return AbsentLiveData.create()
+            }
+
+            override suspend fun updateLocalDb(cacheObject: BlogPostEntity?) {
+                cacheObject?.let {
+                    blogPostDao.updateBlogPost(it.primaryKey, it.title, it.body, it.image)
+                }
+            }
+
+            override fun setJob(job: Job) {
+                addJob("updateBlogPost", job)
             }
 
         }.asLiveData()
