@@ -29,8 +29,6 @@ class MainActivity : BaseActivity() {
         val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottom_navigation_view)
         bottomNavigationView.setupWithNavController(navController)
 
-//        setupActionBarWithNavController(navController)
-
         bottomNavigationView.setOnItemReselectedListener {
 
         }
@@ -47,9 +45,7 @@ class MainActivity : BaseActivity() {
 
     private fun subscribeToObservers() {
         sessionManager.cashedToken.observe(this, { authToken ->
-            Log.d("MAIN_ACTIVITY", "authToken in main activity $authToken")
             if (authToken == null || authToken.account_primary_key == -1 || authToken.token == null) {
-                Log.d("AppDebug", "subscribeToObservers: navigating to auth activity")
                 navToAuthActivity()
             }
         })

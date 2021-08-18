@@ -101,6 +101,16 @@ class BlogRvAdapter(
         differ.submitList(list)
     }
 
+    fun preloadGlideItems(
+        requestManager: RequestManager,
+        list: List<BlogPost>
+    ) {
+        for (blogPost in list){
+            requestManager.load(blogPost.image)
+                .preload()
+        }
+    }
+
     class BlogPostViewHolder
     constructor(
         val binding: ItemBlogListBinding,

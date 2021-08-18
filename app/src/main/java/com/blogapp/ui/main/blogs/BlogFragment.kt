@@ -94,12 +94,16 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
 
         viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
             viewState?.let {
-                rvAdapter.submitList(
-                    list = viewState.blogFields.blogList.map {
+                rvAdapter.apply {
+                    val list = viewState.blogFields.blogList.map {
                         BlogPostMapper.toBlogPost(it)
-                    },
-                    isQueryExhausted = viewState.blogFields.isQueryExhausted
-                )
+                    }
+                    submitList(
+                        list,
+                        isQueryExhausted = viewState.blogFields.isQueryExhausted
+                    )
+                    preloadGlideItems(requestManager, list)
+                }
             }
         })
     }
@@ -226,7 +230,7 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when(item.itemId){
+        when (item.itemId) {
             R.id.action_filter_settings -> {
                 showFilterOptions()
                 return true
