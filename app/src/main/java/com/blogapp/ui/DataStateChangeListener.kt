@@ -1,6 +1,6 @@
 package com.blogapp.ui
 
-import com.domain.utils.DataState
+import com.domain.dataState.DataState
 
 interface DataStateChangeListener {
 

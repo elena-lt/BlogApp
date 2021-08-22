@@ -1,5 +1,6 @@
 package com.blogapp.ui.main.blogs
 
+import android.annotation.SuppressLint
 import android.app.SearchManager
 import android.content.Context.SEARCH_SERVICE
 import android.os.Bundle
@@ -12,6 +13,9 @@ import android.widget.RadioGroup
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -21,7 +25,6 @@ import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.customview.getCustomView
 import com.blogapp.R
-
 import com.blogapp.databinding.FragmentBlogBinding
 import com.blogapp.models.BlogPost
 import com.blogapp.models.mappers.BlogPostMapper
@@ -30,10 +33,11 @@ import com.blogapp.recyclerViewUtils.OnClickListener
 import com.blogapp.recyclerViewUtils.TopSpacingItemDecoration
 import com.blogapp.ui.main.blogs.state.BlogStateEvent
 import com.blogapp.ui.main.blogs.viewModel.*
-import com.blogapp.utils.ErrorPaginationDone
-import com.domain.utils.DataState
-import com.domain.viewState.BlogViewState
+import com.domain.dataState.DataState
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
+@SuppressLint("UnsafeRepeatOnLifecycleDetector")
 class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
 
     private lateinit var rvAdapter: BlogRvAdapter
@@ -58,19 +62,8 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
     }
 
     override fun onDestroy() {
-//        binding.blogPostRecyclerview.adapter = null
+        binding.blogPostRecyclerview.adapter = null
         super.onDestroy()
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        super.onCreateOptionsMenu(menu, inflater)
-        inflater.inflate(R.menu.search_menu, menu)
-        initSearchView(menu)
-    }
-
-    private fun execute() {
-        viewModel.setQuery("")
-        viewModel.setStateEvent(BlogStateEvent.BlogSearchEvent)
     }
 
     private fun handleOnCLickAndRefreshEvents() {
@@ -84,28 +77,42 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
     }
 
     private fun subscribeToObservers() {
-        viewModel.dataState.observe(viewLifecycleOwner, { dataState ->
-            dataState?.let {
-                handlePagination(dataState)
-                stateChangeListener.dataStateChange(dataState)
 
-            }
-        })
+        viewLifecycleOwner.lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                launch {
+                    viewModel.dataState.collect { dataState ->
+//                handlePagination(dataState)
+                        stateChangeListener.dataStateChange(dataState)
 
-        viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
-            viewState?.let {
-                rvAdapter.apply {
-                    val list = viewState.blogFields.blogList.map {
-                        BlogPostMapper.toBlogPost(it)
+                        when (dataState) {
+                            is DataState.SUCCESS -> {
+                                dataState.data?.let { viewState ->
+                                    viewModel.setViewState(viewState)
+                                }
+                            }
+                        }
                     }
-                    submitList(
-                        list,
-                        isQueryExhausted = viewState.blogFields.isQueryExhausted
-                    )
-                    preloadGlideItems(requestManager, list)
+                }
+
+                launch {
+                    viewModel.viewState.collect { viewState ->
+                        viewState.blogFields.let {
+                            rvAdapter.apply {
+                                val list = viewState.blogFields.blogList.map {
+                                    BlogPostMapper.toBlogPost(it)
+                                }
+                                submitList(
+                                    list,
+                                    isQueryExhausted = viewState.blogFields.isQueryExhausted
+                                )
+                                preloadGlideItems(requestManager, list)
+                            }
+                        }
+                    }
                 }
             }
-        })
+        }
     }
 
     private fun onBlogSearchOrFilter() {
@@ -117,27 +124,6 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
     private fun resetUI() {
         binding.blogPostRecyclerview.smoothScrollToPosition(0)
         stateChangeListener.hideSoftKeyboard()
-    }
-
-    private fun handlePagination(dataState: DataState<BlogViewState>) {
-        dataState.data?.let {
-            it.data?.let {
-                it.getContentIfNotHandled()?.let { viewState ->
-                    viewModel.handleIncomingBlogListData(viewState)
-                }
-            }
-        }
-        //if invalid page -> api returns error mss "Invalid page"
-        dataState.error?.let { event ->
-            event.peekContent().response.message?.let { msg ->
-                if (ErrorPaginationDone.isPaginationDone(msg)) {
-                    event.getContentIfNotHandled()
-
-                    viewModel.setQueryExhausted(true)
-                }
-            }
-        }
-
     }
 
     private fun initRecyclerAdapter() {
@@ -227,6 +213,12 @@ class BlogFragment : BaseBlogFragment<FragmentBlogBinding>(), OnClickListener {
             dialog.show()
         }
 
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        inflater.inflate(R.menu.search_menu, menu)
+        initSearchView(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

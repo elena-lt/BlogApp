@@ -1,8 +1,13 @@
 package com.blogapp.ui.auth
 
+import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.viewbinding.ViewBinding
 import com.blogapp.R
@@ -10,7 +15,10 @@ import com.blogapp.databinding.FragmentLoginBinding
 import com.blogapp.ui.auth.state.AuthStateEvent
 import com.blogapp.ui.base.BaseAuthFragment
 import com.domain.viewState.LoginFields
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
+@SuppressLint("UnsafeRepeatOnLifecycleDetector")
 class LoginFragment : BaseAuthFragment<FragmentLoginBinding>() {
 
     override val bindingInflater: (LayoutInflater) -> ViewBinding
@@ -30,11 +38,10 @@ class LoginFragment : BaseAuthFragment<FragmentLoginBinding>() {
                 binding.inputPassword.text.toString()
             )
         )
-
         super.onDestroy()
     }
 
-    private fun handleBtnClickListeners(){
+    private fun handleBtnClickListeners() {
         binding.loginButton.setOnClickListener {
             login()
         }
@@ -58,13 +65,18 @@ class LoginFragment : BaseAuthFragment<FragmentLoginBinding>() {
     }
 
     private fun subscribeToObservers() {
-        viewModel.viewState.observe(viewLifecycleOwner, {
-            it.LoginFields?.let { loginFields ->
-                loginFields.login_email?.let { email ->
-                    binding.inputEmail.setText(email)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                viewModel.viewState.collect {
+                    it.LoginFields?.let { loginFields ->
+                        loginFields.login_email?.let { email ->
+                            binding.inputEmail.setText(email)
+                        }
+                    }
                 }
             }
-        })
+        }
     }
 
 }

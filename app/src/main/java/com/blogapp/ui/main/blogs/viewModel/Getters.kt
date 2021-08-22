@@ -4,52 +4,51 @@ import android.net.Uri
 import com.domain.models.BlogPostDomain
 
 fun BlogViewModel.getIsQueryInProgress(): Boolean {
-    getCurrentViewStateOrNew().let {
+    currentState.let {
         return it.blogFields.isQueryInProgress
-
     }
 }
 
 fun BlogViewModel.getIsQueryExhausted(): Boolean {
-    getCurrentViewStateOrNew().let {
+    currentState.let {
         return it.blogFields.isQueryExhausted
     }
 }
 
 fun BlogViewModel.getPage(): Int {
-    getCurrentViewStateOrNew().let {
+    currentState.let {
         return it.blogFields.page
     }
 }
 
 fun BlogViewModel.getSearchQuery(): String {
-    getCurrentViewStateOrNew().let {
+    currentState.let {
         return it.blogFields.searchQuery
     }
 }
 
 fun BlogViewModel.getFilter(): String {
-    getCurrentViewStateOrNew().let {
+    currentState.let {
         return it.blogFields.filter
     }
 }
 
 fun BlogViewModel.getOrder(): String {
-    getCurrentViewStateOrNew().let {
+    currentState.let {
         return it.blogFields.order
     }
 }
 
-fun BlogViewModel.getBlogPost() : BlogPostDomain {
-    getCurrentViewStateOrNew().let{
-         it.viewBlogFields.blogPost?.let { blogPost ->
-             return blogPost
-        }?: return BlogPostDomain(-1, "", "", "", "", "1", "")
+fun BlogViewModel.getBlogPost(): BlogPostDomain {
+    currentState.let {
+        it.viewBlogFields.blogPost?.let { blogPost ->
+            return blogPost
+        } ?: return BlogPostDomain(-1, "", "", "", "", "1", "")
     }
 }
 
 fun BlogViewModel.getSlug(): String {
-    getCurrentViewStateOrNew().let {
+    currentState.let {
         return it.viewBlogFields.blogPost?.let {
             it.slug
         } ?: ""
@@ -57,13 +56,13 @@ fun BlogViewModel.getSlug(): String {
 }
 
 fun BlogViewModel.isAuthorOfBlogPost(): Boolean {
-    getCurrentViewStateOrNew().let {
+    currentState.let {
         return it.viewBlogFields.isAuthorOfBlogPost
     }
 }
 
 fun BlogViewModel.getUpdatedBogUri(): Uri? {
-    getCurrentViewStateOrNew().let {
+    currentState.let {
         it.updateBlogFields.imageUri?.let {
             return it
         }

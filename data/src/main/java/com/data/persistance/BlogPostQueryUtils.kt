@@ -1,6 +1,5 @@
 package com.data.persistance
 
-import androidx.lifecycle.LiveData
 import com.data.models.BlogPostEntity
 import com.data.persistance.BlogQueryUtils.Companion.ORDER_BY_ASC_DATE_UPDATED
 import com.data.persistance.BlogQueryUtils.Companion.ORDER_BY_DESC_DATE_UPDATED
@@ -22,11 +21,11 @@ class BlogQueryUtils {
 }
 
 
-fun BlogPostDao.returnOrderedBlogQuery(
+suspend fun BlogPostDao.returnOrderedBlogQuery(
     query: String,
     filterAndOrder: String,
     page: Int
-): LiveData<List<BlogPostEntity>> {
+): List<BlogPostEntity> {
 
     when{
 

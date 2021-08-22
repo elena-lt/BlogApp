@@ -17,7 +17,4 @@ object Mapper {
         return RegisterResponseDomain(r.response, r.errorMessage, r.email, r.username, r.pk, r.token)
     }
 
-    fun toAccountPropertiesDomain(accProperties: AccountProperties): AccountPropertiesDomain{
-        return AccountPropertiesDomain(accProperties.primaryKey, accProperties.email, accProperties.email)
-    }
 }

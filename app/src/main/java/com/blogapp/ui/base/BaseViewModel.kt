@@ -1,41 +1,64 @@
 package com.blogapp.ui.base
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Transformations
-import androidx.lifecycle.ViewModel
-import com.domain.utils.DataState
+import android.util.Log
+import androidx.lifecycle.*
+import com.domain.dataState.DataState
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlin.math.log
 
 abstract class BaseViewModel<StateEvent, ViewState> : ViewModel() {
 
-    protected val _stateEvent: MutableLiveData<StateEvent> = MutableLiveData()
-    protected val _viewState: MutableLiveData<ViewState> = MutableLiveData()
+    private val initialState: ViewState by lazy { createInitialState() }
+    abstract fun createInitialState(): ViewState
 
-    val viewState: LiveData<ViewState>
-        get() = _viewState
+    private val _stateEvent: MutableSharedFlow<StateEvent> = MutableSharedFlow()
+    val stateEvent = _stateEvent.asSharedFlow()
 
-    val dataState: LiveData<DataState<ViewState>> = Transformations
-        .switchMap(_stateEvent) { stateEvent ->
-            stateEvent?.let {
-                handleStateEvent(stateEvent)
+    private val _dataState: MutableSharedFlow<DataState<ViewState>> = MutableSharedFlow()
+    val dataState = _dataState.asSharedFlow()
+
+    private val _viewState: MutableStateFlow<ViewState> = MutableStateFlow(initialState)
+    val viewState = _viewState.asStateFlow()
+
+    val currentState: ViewState
+        get() = _viewState.value
+
+    init {
+        subscribeEvents()
+    }
+
+    private fun subscribeEvents() {
+        viewModelScope.launch {
+            stateEvent.collect {
+                handleStateEvent(it)
             }
         }
+    }
 
     fun setStateEvent(event: StateEvent) {
-        _stateEvent.value = event
+        viewModelScope.launch {
+            _stateEvent.emit(event)
+        }
     }
 
-    fun setViewState(state: ViewState){
+    fun setDataState(dataState: DataState<ViewState>) {
+        viewModelScope.launch {
+            _dataState.emit(dataState)
+        }
+    }
+
+    fun setViewState(state: ViewState) {
         _viewState.value = state
     }
+//
+//    fun setNewViewState(reduce: ViewState.() -> ViewState) {
+//        viewModelScope.launch {
+//            val newState = currentState.reduce()
+//            _viewState.emit(newState)
+//        }
+//    }
 
-    fun getCurrentViewStateOrNew(): ViewState {
-        val value = viewState.value?.let { it } ?: initNewViewState()
-        return value
-    }
-
-    abstract fun initNewViewState(): ViewState
-
-    abstract fun handleStateEvent(stateEvent: StateEvent): LiveData<DataState<ViewState>>
+    abstract fun handleStateEvent(stateEvent: StateEvent)
 
 }

@@ -1,9 +1,9 @@
 package com.domain.repository
 
 import android.net.Uri
-import androidx.lifecycle.LiveData
-import com.domain.utils.DataState
+import com.domain.dataState.DataState
 import com.domain.viewState.CreateNewBlogViewState
+import kotlinx.coroutines.flow.Flow
 
 interface CreateBlogRepository {
 
@@ -11,5 +11,5 @@ interface CreateBlogRepository {
         title: String,
         body: String,
         imageUri: Uri
-    ): LiveData<DataState<CreateNewBlogViewState>>
+    ): Flow<DataState<CreateNewBlogViewState>>
 }

@@ -1,5 +1,6 @@
 package com.blogapp.ui.main.blogs
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
@@ -7,19 +8,34 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.view.*
+import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.viewbinding.ViewBinding
 import com.blogapp.R
 import com.blogapp.databinding.FragmentUpdateBlogBinding
+import com.blogapp.models.mappers.BlogPostMapper
 import com.blogapp.ui.main.blogs.state.BlogStateEvent
+import com.blogapp.ui.main.blogs.viewModel.getBlogPost
+import com.blogapp.ui.main.blogs.viewModel.handleIncomingBlogListData
 import com.blogapp.ui.main.blogs.viewModel.onBlogPostUpdateSuccess
 import com.blogapp.ui.main.blogs.viewModel.setUpdatedBlogFields
 import com.blogapp.ui.main.createPost.state.CreateBlogStateEvent
 import com.blogapp.utils.Const
+import com.domain.dataState.DataState
+import com.domain.dataState.MessageType
+import com.domain.dataState.StateMessage
+import com.domain.dataState.UIComponentType
 import com.domain.utils.*
+import com.domain.viewState.BlogViewState
 import com.theartofdev.edmodo.cropper.CropImage
 import com.theartofdev.edmodo.cropper.CropImageView
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
+@SuppressLint("UnsafeRepeatOnLifecycleDetector")
 class UpdateBlogFragment : BaseBlogFragment<FragmentUpdateBlogBinding>() {
 
     override val bindingInflater: (LayoutInflater) -> ViewBinding
@@ -33,48 +49,46 @@ class UpdateBlogFragment : BaseBlogFragment<FragmentUpdateBlogBinding>() {
         handleOnCLickEvents()
     }
 
-    override fun onPause() {
-        super.onPause()
-        viewModel.setUpdatedBlogFields(
-            binding.blogTitle.text.toString(),
-            binding.blogBody.text.toString(),
-            null
-        )
-    }
 
-    private fun handleOnCLickEvents(){
+    private fun handleOnCLickEvents() {
         binding.blogImage.setOnClickListener {
             if (stateChangeListener.isStoragePermissionGranted()) {
                 pickFromGallery()
             }
         }
     }
-    private fun subscribeObservers() {
-        viewModel.dataState.observe(viewLifecycleOwner, { dataState ->
-            dataState?.let {
-                stateChangeListener.dataStateChange(dataState)
 
-                dataState.data?.let { data ->
-                    data.data?.getContentIfNotHandled()?.let { viewState ->
-                        viewState.viewBlogFields.blogPost?.let { blog ->
-                           viewModel.onBlogPostUpdateSuccess(blog).let{
-                               findNavController().popBackStack()
-                           }
+    private fun subscribeObservers() {
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                launch {
+                    viewModel.dataState.collect { dataState ->
+                        when (dataState) {
+                            is DataState.SUCCESS -> {
+                                dataState.data?.let {
+                                    viewModel.handleIncomingBlogListData(it)
+                                }
+                            }
+                            else -> stateChangeListener.dataStateChange(dataState)
+                        }
+                    }
+                }
+
+                launch {
+                    viewModel.viewState.collect {
+                        it.updateBlogFields.let { blogProperties ->
+                            setBlogProperties(
+                                blogProperties.blogTitle,
+                                blogProperties.blogBody,
+                                blogProperties.imageUri
+                            )
                         }
                     }
                 }
             }
-        })
+        }
 
-        viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
-            viewState.updateBlogFields.let { updateBlogFields ->
-                setBlogProperties(
-                    updateBlogFields.blogTitle,
-                    updateBlogFields.blogBody,
-                    updateBlogFields.imageUri
-                )
-            }
-        })
     }
 
     private fun setBlogProperties(blogTitle: String?, blogBody: String?, imageUri: Uri?) {
@@ -84,16 +98,14 @@ class UpdateBlogFragment : BaseBlogFragment<FragmentUpdateBlogBinding>() {
     }
 
     private fun saveChanges() {
-        resultUri?.let {
-            viewModel.setStateEvent(
-                BlogStateEvent.UpdateBlogStateEvent(
-                    binding.blogTitle.text.toString(),
-                    binding.blogBody.text.toString(),
-                    it
-                )
+        viewModel.setStateEvent(
+            BlogStateEvent.UpdateBlogStateEvent(
+                binding.blogTitle.text.toString(),
+                binding.blogBody.text.toString(),
+                resultUri ?: viewModel.getBlogPost().image.toUri()
             )
-            stateChangeListener.hideSoftKeyboard()
-        } ?: showErrorDialog("Please select image")
+        )
+        stateChangeListener.hideSoftKeyboard()
     }
 
     private fun pickFromGallery() {
@@ -111,16 +123,6 @@ class UpdateBlogFragment : BaseBlogFragment<FragmentUpdateBlogBinding>() {
                 .setGuidelines(CropImageView.Guidelines.ON)
                 .start(it, this)
         }
-    }
-
-    private fun showErrorDialog(errorMsg: String) {
-        stateChangeListener.dataStateChange(
-            DataState(
-                Event(StateError(Response(errorMsg, ResponseType.Dialog()))),
-                Loading(false),
-                Data(Event.dataEvent(null), null)
-            )
-        )
     }
 
     var resultUri: Uri? = null
@@ -152,6 +154,18 @@ class UpdateBlogFragment : BaseBlogFragment<FragmentUpdateBlogBinding>() {
                 }
             }
         }
+    }
+
+    private fun showErrorDialog(errorMsg: String) {
+        stateChangeListener.dataStateChange(
+            DataState.ERROR<CreateBlogStateEvent>(
+                stateMessage = StateMessage(
+                    message = errorMsg,
+                    uiComponentType = UIComponentType.DIALOG,
+                    messageType = MessageType.ERROR
+                )
+            )
+        )
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

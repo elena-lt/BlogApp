@@ -1,14 +1,21 @@
 package com.blogapp.ui.auth
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.viewbinding.ViewBinding
 import com.blogapp.databinding.FragmentRegisterBinding
 import com.blogapp.ui.auth.state.AuthStateEvent
 import com.blogapp.ui.base.BaseAuthFragment
 import com.domain.viewState.RegistrationFields
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
+@SuppressLint("UnsafeRepeatOnLifecycleDetector")
 class RegisterFragment : BaseAuthFragment<FragmentRegisterBinding>() {
 
     override val bindingInflater: (LayoutInflater) -> ViewBinding
@@ -17,8 +24,7 @@ class RegisterFragment : BaseAuthFragment<FragmentRegisterBinding>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.registerButton.setOnClickListener { register() }
-
+        handleClickEvents()
         subscribeToObservers()
     }
 
@@ -30,6 +36,10 @@ class RegisterFragment : BaseAuthFragment<FragmentRegisterBinding>() {
                 binding.inputUsername.text.toString()
             )
         )
+    }
+
+    private fun handleClickEvents() {
+        binding.registerButton.setOnClickListener { register() }
     }
 
     private fun register() {
@@ -44,15 +54,21 @@ class RegisterFragment : BaseAuthFragment<FragmentRegisterBinding>() {
     }
 
     private fun subscribeToObservers() {
-        viewModel.viewState.observe(viewLifecycleOwner, {
-            it.registrationFields?.let { regFields ->
-                regFields.registrationEmail?.let { email ->
-                    binding.inputEmail.setText(email)
-                }
-                regFields.registrationUsername?.let { username ->
-                    binding.inputUsername.setText(username)
+        viewLifecycleOwner.lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                launch {
+                    viewModel.viewState.collect {
+                        it.registrationFields?.let { registrationFields ->
+                            registrationFields.registrationEmail?.let { email ->
+                                binding.inputEmail.setText(email)
+                            }
+                            registrationFields.registrationUsername?.let { username ->
+                                binding.inputUsername.setText(username)
+                            }
+                        }
+                    }
                 }
             }
-        })
+        }
     }
 }

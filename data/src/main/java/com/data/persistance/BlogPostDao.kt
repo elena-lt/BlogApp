@@ -1,6 +1,5 @@
 package com.data.persistance
 
-import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.data.models.BlogPostEntity
 import com.data.utils.Const.PAGINATION_PAGE_SIZE
@@ -18,11 +17,11 @@ interface BlogPostDao {
         OR username LIKE '%' || :query || '%' 
         LIMIT (:page * :pageSize)
         """)
-    fun getAllBlogPosts(
+    suspend fun getAllBlogPosts(
         query: String,
         page: Int,
         pageSize: Int = PAGINATION_PAGE_SIZE
-    ): LiveData<List<BlogPostEntity>>
+    ): List<BlogPostEntity>
 
     @Query("""
         SELECT * FROM blog_post 
@@ -31,11 +30,11 @@ interface BlogPostDao {
         OR username LIKE '%' || :query || '%' 
         ORDER BY date_updated DESC LIMIT (:page * :pageSize)
         """)
-    fun searchBlogPostsOrderByDateDESC(
+    suspend fun searchBlogPostsOrderByDateDESC(
         query: String,
         page: Int,
         pageSize: Int = PAGINATION_PAGE_SIZE
-    ): LiveData<List<BlogPostEntity>>
+    ): List<BlogPostEntity>
 
     @Query("""
         SELECT * FROM blog_post 
@@ -43,18 +42,18 @@ interface BlogPostDao {
         OR body LIKE '%' || :query || '%' 
         OR username LIKE '%' || :query || '%' 
         ORDER BY date_updated  ASC LIMIT (:page * :pageSize)""")
-    fun searchBlogPostsOrderByDateASC(
+    suspend fun searchBlogPostsOrderByDateASC(
         query: String,
         page: Int,
         pageSize: Int = PAGINATION_PAGE_SIZE
-    ): LiveData<List<BlogPostEntity>>
+    ): List<BlogPostEntity>
 
     @Query ("""
         UPDATE blog_post SET title = :title, 
         body = :body, image = :image
         WHERE primary_key = :primaryKey
     """)
-    fun updateBlogPost(primaryKey: Int, title: String, body: String, image: String)
+    suspend fun updateBlogPost(primaryKey: Int, title: String, body: String, image: String)
 
     @Delete
     suspend fun deleteBlogPost(blogPost: BlogPostEntity)

@@ -1,31 +1,24 @@
 package com.data.network.main
 
-import androidx.lifecycle.LiveData
-import com.data.models.AccountProperties
-import com.data.models.BlogCreateUpdateResponse
-import com.data.models.BlogSearchResponse
-import com.data.models.GenericResponse
-import com.data.utils.GenericApiResponse
-import com.data.utils.LiveDataCallAdapterFactory
+import com.data.models.*
 import okhttp3.MultipartBody
-import okhttp3.Request
 import okhttp3.RequestBody
 import retrofit2.http.*
 
 interface OpenApiMainService {
 
     @GET("account/properties")
-    fun getAccountProperties(
+    suspend fun getAccountProperties(
         @Header("Authorization") authorization: String
-    ): LiveData<GenericApiResponse<AccountProperties>>
+    ): AccountProperties
 
     @PUT("account/properties/update")
     @FormUrlEncoded
-    fun updateAccountProperties(
+    suspend fun updateAccountProperties(
         @Header("Authorization") authorization: String,
         @Field("email") email: String,
         @Field("username") username: String
-    ): LiveData<GenericApiResponse<GenericResponse>>
+    ): GenericResponse
 
     @PUT("account/change_password/")
     @FormUrlEncoded
@@ -34,45 +27,45 @@ interface OpenApiMainService {
         @Field("old_password") oldPassword: String,
         @Field("new_password") newPassword: String,
         @Field("confirm_new_password") confirmNewPassword: String,
-    ): LiveData<GenericApiResponse<GenericResponse>>
+    ): GenericResponse
 
     @GET("blog/list")
-    fun searchListBlogPost(
+    suspend fun searchListBlogPost(
         @Header("Authorization") authorization: String,
         @Query("search") query: String,
         @Query("ordering") ordering: String,
         @Query("page") page: Int,
-    ): LiveData<GenericApiResponse<BlogSearchResponse>>
+    ): BlogSearchResponse
 
     @GET ("blog/{slug}/is_author")
-    fun isAuthor(
+    suspend fun isAuthor(
         @Header("Authorization") authorization: String,
         @Path ("slug") slug: String
-    ): LiveData<GenericApiResponse<GenericResponse>>
+    ): GenericResponse
 
     @Multipart
     @POST ("blog/create")
-    fun createBlogPost(
+    suspend fun createBlogPost(
         @Header("Authorization") authorization: String,
         @Part ("title") title: RequestBody,
         @Part ("body") body: RequestBody,
         @Part  image: MultipartBody.Part?
-    ): LiveData<GenericApiResponse<BlogCreateUpdateResponse>>
+    ): BlogCreateUpdateResponse
 
     @Multipart
     @PUT ("blog/{slug}/update")
-    fun updateBlogPost(
+    suspend fun updateBlogPost(
         @Header("Authorization") authorization: String,
         @Path ("slug") slug: String,
         @Part ("title") title: RequestBody,
         @Part ("body") body: RequestBody,
         @Part  image: MultipartBody.Part?
-    ): LiveData<GenericApiResponse<BlogCreateUpdateResponse>>
+    ): BlogCreateUpdateResponse
 
     @DELETE ("blog/{slug}/delete")
-    fun deleteBlogPost (
+    suspend fun deleteBlogPost (
         @Header("Authorization") authorization: String,
         @Path ("slug") slug: String
-    ): LiveData<GenericApiResponse<GenericResponse>>
+    ): GenericResponse
 
 }

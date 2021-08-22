@@ -7,7 +7,6 @@ import com.data.persistance.AppDatabase
 import com.data.persistance.AuthTokenDao
 import com.data.utils.Const
 import com.data.utils.Const.BASE_URL
-import com.data.utils.LiveDataCallAdapterFactory
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -27,7 +26,6 @@ class RepositoryModule {
     @Singleton
     fun provideRetrofit(gson: Gson) = Retrofit.Builder()
         .baseUrl(BASE_URL)
-        .addCallAdapterFactory(LiveDataCallAdapterFactory())
         .addConverterFactory(GsonConverterFactory.create(gson))
         .build()
 

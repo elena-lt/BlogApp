@@ -4,8 +4,9 @@ import android.net.Uri
 import androidx.lifecycle.LiveData
 import com.domain.models.BlogPostDomain
 import com.domain.repository.BlogRepository
-import com.domain.utils.DataState
+import com.domain.dataState.DataState
 import com.domain.viewState.BlogViewState
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class BlogRepositoryImp @Inject constructor(
@@ -16,15 +17,15 @@ class BlogRepositoryImp @Inject constructor(
         query: String,
         filterAndOrder: String,
         page: Int
-    ): LiveData<DataState<BlogViewState>> =
+    ): Flow<DataState<BlogViewState>> =
         blogDataSource.searchBlogPosts(query, page, filterAndOrder)
 
-    override fun checkAuthorOfBlogPost(slug: String): LiveData<DataState<BlogViewState>> =
+    override fun checkAuthorOfBlogPost(slug: String): Flow<DataState<BlogViewState>> =
         blogDataSource.checkAuthorOfBlogPost(slug)
 
-    override fun updateBlogPost(slug: String, blogTitle: String,  blogBody: String, imageUri: Uri): LiveData<DataState<BlogViewState>> =
+    override fun updateBlogPost(slug: String, blogTitle: String,  blogBody: String, imageUri: Uri): Flow<DataState<BlogViewState>> =
         blogDataSource.updateBlogPost(slug, blogTitle, blogBody, imageUri)
 
-    override fun deleteBlog(blogPost: BlogPostDomain): LiveData<DataState<BlogViewState>> =
+    override fun deleteBlog(blogPost: BlogPostDomain): Flow<DataState<BlogViewState>> =
         blogDataSource.deleteBlogPost(blogPost)
 }

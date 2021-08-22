@@ -1,22 +1,19 @@
 package com.blogapp.ui.auth
 
 import android.util.Log
-import androidx.lifecycle.LiveData
+import androidx.lifecycle.viewModelScope
 import com.blogapp.ui.base.BaseViewModel
 import com.blogapp.ui.auth.state.AuthStateEvent
 import com.blogapp.ui.auth.state.AuthStateEvent.*
-import com.domain.models.AuthTokenDomain
 import com.domain.usecases.auth.CheckPreviousAuthUserUseCase
 import com.domain.usecases.auth.LoginUseCase
 import com.domain.usecases.auth.RegisterUseCase
-import com.domain.utils.AbsentLiveData
-import com.domain.utils.DataState
-import com.domain.utils.Loading
 import com.domain.viewState.AuthViewState
 import com.domain.viewState.LoginFields
 import com.domain.viewState.RegistrationFields
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import javax.inject.Inject
-
 
 class AuthViewModel @Inject constructor(
     private val login: LoginUseCase,
@@ -24,74 +21,71 @@ class AuthViewModel @Inject constructor(
     private val checkPrevAuthUser: CheckPreviousAuthUserUseCase
 ) : BaseViewModel<AuthStateEvent, AuthViewState>() {
 
-    override fun handleStateEvent(stateEvent: AuthStateEvent): LiveData<DataState<AuthViewState>> {
-        return when (stateEvent) {
+    override fun createInitialState(): AuthViewState {
+        return AuthViewState()
+    }
+
+    override fun handleStateEvent(stateEvent: AuthStateEvent) {
+        when (stateEvent) {
             is LoginEvent -> {
-                login.invoke(stateEvent.email, stateEvent.password)
+                login(stateEvent.email, stateEvent.password)
             }
             is RegisterEvent -> {
-                register.invoke(
+                register(
                     stateEvent.email,
-                    stateEvent.username,
                     stateEvent.password,
-                    stateEvent.confirmPassword
+                    stateEvent.confirmPassword,
+                    stateEvent.username
                 )
             }
             is CheckPreviousAuthEvent -> {
-                checkPrevAuthUser.invoke()
-            }
-            is None -> {
-                object : LiveData<DataState<AuthViewState>>() {
-                    override fun onActive() {
-                        super.onActive()
-                        value = DataState(error = null, loading = Loading(false), data = null)
-                    }
-                }
+                checkPrevAuthUser()
             }
         }
     }
 
+    private fun login(email: String, password: String) {
+        viewModelScope.launch {
+            login.invoke(email, password).collect {
+                setDataState(it)
+            }
+        }
+    }
+
+    private fun register(
+        email: String,
+        password: String,
+        confirmPassword: String,
+        username: String
+    ) {
+        viewModelScope.launch {
+            register.invoke(email, username, password, confirmPassword).collect {
+                setDataState(it)
+            }
+        }
+    }
+
+    private fun checkPrevAuthUser(){
+       viewModelScope.launch {
+           checkPrevAuthUser.invoke().collect { dataState ->
+               setDataState(dataState)
+           }
+       }
+    }
+
     fun setRegistrationFields(regFields: RegistrationFields) {
-        val update = getCurrentViewStateOrNew()
+        val update =currentState
         if (update.registrationFields == regFields) {
             return
         }
         update.registrationFields = regFields
-        _viewState.value = update
     }
 
     fun setLoginFields(loginFields: LoginFields) {
-        val update = getCurrentViewStateOrNew()
+        val update = currentState
         if (update.LoginFields == loginFields) {
             return
         }
         update.LoginFields = loginFields
-        _viewState.value = update
     }
-
-    fun setAuthToken(authToken: AuthTokenDomain) {
-        val update = getCurrentViewStateOrNew()
-        if (update.authToken == authToken as AuthTokenDomain) {
-            return
-        }
-        update.authToken = authToken
-        _viewState.value = update
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        cancelActiveJobs()
-    }
-
-    fun handlePendingData(){
-        setStateEvent(None)
-    }
-
-    fun cancelActiveJobs(){
-        handlePendingData()
-        Log.d("AppDebug", "AuthViewModel // cancelActiveJobs: cancelling active jobs")
-        //repository.canceljob
-    }
-
-    override fun initNewViewState(): AuthViewState = AuthViewState()
 }

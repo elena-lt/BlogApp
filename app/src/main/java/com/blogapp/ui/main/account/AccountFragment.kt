@@ -44,36 +44,38 @@ class AccountFragment : BaseAccountFragment<FragmentAccountBinding>() {
     }
 
     private fun subscribeToObservers() {
-        viewModel.dataState.observe(viewLifecycleOwner, { dataState ->
-            stateChangeListener.dataStateChange(dataState)
-            dataState?.let {
-                it.data?.let { data ->
-                    data.data?.let { event ->
-                        event.getContentIfNotHandled()?.let { accountViewState ->
-                            accountViewState.accountProperties?.let { accountProperties ->
-                                viewModel.setAccountPropertiesData(
-                                    AccountPropertiesMapper.toAccountProperties(
-                                        accountProperties
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        })
-
-        viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
-            viewState?.let {
-                it.accountProperties?.let { accountProperties ->
-                    setAccountProperties(
-                        AccountPropertiesMapper.toAccountProperties(
-                            accountProperties
-                        )
-                    )
-                }
-            }
-        })
+//
+//
+//        viewModel.dataState.observe(viewLifecycleOwner, { dataState ->
+//            stateChangeListener.dataStateChange(dataState)
+//            dataState?.let {
+//                it.data?.let { data ->
+//                    data.data?.let { event ->
+//                        event.getContentIfNotHandled()?.let { accountViewState ->
+//                            accountViewState.accountProperties?.let { accountProperties ->
+//                                viewModel.setAccountPropertiesData(
+//                                    AccountPropertiesMapper.toAccountProperties(
+//                                        accountProperties
+//                                    )
+//                                )
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        })
+//
+//        viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
+//            viewState?.let {
+//                it.accountProperties?.let { accountProperties ->
+//                    setAccountProperties(
+//                        AccountPropertiesMapper.toAccountProperties(
+//                            accountProperties
+//                        )
+//                    )
+//                }
+//            }
+//        })
     }
 
     private fun setAccountProperties(accountProperties: AccountProperties) {

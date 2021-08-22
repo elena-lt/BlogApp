@@ -49,9 +49,5 @@ abstract class BaseAuthFragment <out T: ViewBinding> : DaggerFragment(){
         }
     }
 
-    private fun cancelActiveJobs(){
-        viewModel.cancelActiveJobs()
-    }
-
     protected abstract val bindingInflater: (LayoutInflater) -> ViewBinding
 }

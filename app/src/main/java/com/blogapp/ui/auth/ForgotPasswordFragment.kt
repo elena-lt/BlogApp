@@ -16,9 +16,10 @@ import com.blogapp.databinding.FragmentForgotPasswordBinding
 import com.blogapp.ui.DataStateChangeListener
 import com.blogapp.ui.base.BaseAuthFragment
 import com.blogapp.utils.Const.PASSWORD_RESET_URL
-import com.domain.utils.DataState
-import com.domain.utils.Response
-import com.domain.utils.ResponseType
+import com.domain.dataState.DataState
+import com.domain.dataState.MessageType
+import com.domain.dataState.StateMessage
+import com.domain.dataState.UIComponentType
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -40,7 +41,9 @@ class ForgotPasswordFragment : BaseAuthFragment<FragmentForgotPasswordBinding>()
 
         override fun onError(errorMsg: String) {
             val dataState =
-                DataState.error<Any>(response = Response(errorMsg, ResponseType.Dialog()))
+                DataState.ERROR<Any>(
+                    stateMessage = StateMessage(errorMsg, UIComponentType.DIALOG, MessageType.ERROR)
+                )
             stateChangeListener.dataStateChange(dataState)
         }
 
@@ -49,9 +52,8 @@ class ForgotPasswordFragment : BaseAuthFragment<FragmentForgotPasswordBinding>()
             // progBar is changing on Main thread
             GlobalScope.launch(Main) {
                 stateChangeListener.dataStateChange(
-                    DataState.loading(
-                        isLoading = isLoading,
-                        cashedData = null
+                    DataState.LOADING(
+                        isLoading = true, cachedData = null
                     )
                 )
             }
@@ -71,7 +73,7 @@ class ForgotPasswordFragment : BaseAuthFragment<FragmentForgotPasswordBinding>()
             )
             animation.duration = 500
             binding.passwordResetDoneContainer.startAnimation(animation)
-            binding.passwordResetDoneContainer.visibility  =View.VISIBLE
+            binding.passwordResetDoneContainer.visibility = View.VISIBLE
         }
     }
 
@@ -80,7 +82,7 @@ class ForgotPasswordFragment : BaseAuthFragment<FragmentForgotPasswordBinding>()
         webView = binding.webview
         loadPasswordResetWebView()
 
-        binding.returnToLauncherFragment.setOnClickListener{
+        binding.returnToLauncherFragment.setOnClickListener {
             findNavController().popBackStack()
         }
     }
@@ -97,9 +99,9 @@ class ForgotPasswordFragment : BaseAuthFragment<FragmentForgotPasswordBinding>()
     @SuppressLint("SetJavaScriptEnabled")
     fun loadPasswordResetWebView() {
         stateChangeListener.dataStateChange(
-            DataState.loading(
+            DataState.LOADING<Any>(
                 isLoading = true,
-                cashedData = null
+                cachedData = null
             )
         )
 
@@ -107,9 +109,9 @@ class ForgotPasswordFragment : BaseAuthFragment<FragmentForgotPasswordBinding>()
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 stateChangeListener.dataStateChange(
-                    DataState.loading(
-                        isLoading = false,
-                        cashedData = null
+                    DataState.LOADING<Any>(
+                        isLoading = true,
+                        cachedData = null
                     )
                 )
             }

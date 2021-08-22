@@ -12,6 +12,9 @@ import com.blogapp.utils.Const.PERMISSIONS_REQUEST_READ_STORAGE
 import com.blogapp.utils.UIMessage
 import com.blogapp.utils.UIMessageType
 import com.data.session.SessionManager
+import com.domain.dataState.DataState
+import com.domain.dataState.StateMessage
+import com.domain.dataState.UIComponentType
 import com.domain.utils.*
 import dagger.android.support.DaggerAppCompatActivity
 import kotlinx.coroutines.Dispatchers
@@ -19,7 +22,8 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-abstract class BaseActivity : DaggerAppCompatActivity(), DataStateChangeListener, UiCommunicationListener {
+abstract class BaseActivity : DaggerAppCompatActivity(), DataStateChangeListener,
+    UiCommunicationListener {
 
     @Inject
     lateinit var sessionManager: SessionManager
@@ -27,70 +31,34 @@ abstract class BaseActivity : DaggerAppCompatActivity(), DataStateChangeListener
     override fun dataStateChange(dataState: DataState<*>) {
         dataState?.let {
             GlobalScope.launch(Dispatchers.Main) {
-                showProgressBar(it.loading.isLoading)
+                showProgressBar(it.loading)
 
-                it.error?.let {
-                    handleErrorState(it)
-                }
-
-                it.data?.let {
-                    it.response?.let { responseEvent ->
-                        handleResponseState(responseEvent)
-                    }
+                it.stateMessage?.let {
+                    handleResponseState(it)
                 }
             }
         }
     }
 
-    private fun handleResponseState(responseEvent: Event<Response>) {
-        responseEvent.getContentIfNotHandled()?.let {
-            when (it.responseType) {
-                is ResponseType.Dialog -> {
-                    it.message?.let { msg ->
-                        displayErrorDialog(msg)
-                    }
-                }
-                is ResponseType.Toast -> {
-                    it.message?.let { msg ->
-                        displayToast(msg)
-                    }
-                }
-                is ResponseType.None -> {
-                    Log.i("AppDebug", "handleErrorState: ${it.message}")
-                }
-            }
-        }
-    }
-
-    private fun handleErrorState(errorEvent: Event<StateError>) {
-        errorEvent.getContentIfNotHandled()?.let {
-            when (it.response.responseType) {
-                is ResponseType.Dialog -> {
-                    it.response.message?.let { msg ->
-                        displayErrorDialog(msg)
-                    }
-                }
-                is ResponseType.Toast -> {
-                    it.response.message?.let { msg ->
-                        displayToast(msg)
-
-                    }
-                }
-                is ResponseType.None -> {
-                    Log.i("AppDebug", "handleErrorState: ${it.response.message}")
+    private fun handleResponseState(stateMessage: StateMessage) {
+        stateMessage.message?.let {
+            when (stateMessage.uiComponentType) {
+                is UIComponentType.DIALOG -> displayErrorDialog(it)
+                is UIComponentType.TOAST -> displayToast(it)
+                else -> {
                 }
             }
         }
     }
 
     override fun onUiMessageReceived(uiMessage: UIMessage) {
-        when(uiMessage.uiMessageType){
-            is UIMessageType.AreYouSureDialog ->{
+        when (uiMessage.uiMessageType) {
+            is UIMessageType.AreYouSureDialog -> {
                 areYouSureDialog(uiMessage.message, uiMessage.uiMessageType.callback)
             }
             is UIMessageType.Toast -> displayToast(uiMessage.message)
             is UIMessageType.Dialog -> displayInfoDialog(uiMessage.message)
-            is UIMessageType.None-> Log.i("AppDebug", "onUiMessageReceived: ${uiMessage.message}")
+            is UIMessageType.None -> Log.i("AppDebug", "onUiMessageReceived: ${uiMessage.message}")
         }
     }
 

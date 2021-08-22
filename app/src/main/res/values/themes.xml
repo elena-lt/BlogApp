@@ -19,5 +19,8 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+
+        //Material btn theme
+        <item name="md_color_button_text">@color/black</item>
     </style>
 </resources>

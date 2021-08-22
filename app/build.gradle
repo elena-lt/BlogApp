@@ -70,7 +70,7 @@ dependencies {
     implementation 'com.github.bumptech.glide:glide:4.12.0'
 
     //Lifecycle
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.3.1"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.4.0-alpha03"
 
     //Dagger2
     def dagger_version = "2.37"

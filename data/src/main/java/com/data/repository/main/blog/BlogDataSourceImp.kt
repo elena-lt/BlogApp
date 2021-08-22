@@ -1,42 +1,32 @@
 package com.data.repository.main.blog
 
 import android.net.Uri
-import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
 import com.data.models.*
 import com.data.models.mappers.BlogPostMapper
 import com.data.network.main.OpenApiMainService
 import com.data.persistance.BlogPostDao
-import com.data.persistance.returnOrderedBlogQuery
 import com.data.repository.JobManager
 import com.data.repository.NetworkBoundResource
 import com.data.session.SessionManager
 import com.data.utils.Const.PAGINATION_PAGE_SIZE
-import com.data.utils.ErrorHandling.Companion.ERROR_UNKNOWN
-import com.data.utils.GenericApiResponse
 import com.data.utils.SuccessHandling.Companion.RESPONSE_HAS_PERMISSION_TO_EDIT
-import com.data.utils.SuccessHandling.Companion.RESPONSE_NO_PERMISSION_TO_EDIT
 import com.data.utils.SuccessHandling.Companion.SUCCESS_BLOG_DELETED
+import com.domain.dataState.DataState
+import com.domain.dataState.MessageType
+import com.domain.dataState.StateMessage
+import com.domain.dataState.UIComponentType
 import com.domain.models.BlogPostDomain
-import com.domain.utils.AbsentLiveData
-import com.domain.utils.DataState
-import com.domain.utils.Response
-import com.domain.utils.ResponseType
 import com.domain.viewState.BlogViewState
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import java.io.File
 import javax.inject.Inject
 
-@InternalCoroutinesApi
+@ExperimentalCoroutinesApi
 class BlogDataSourceImp @Inject constructor(
     private val openApiMainService: OpenApiMainService,
     private val blogPostDao: BlogPostDao,
@@ -47,140 +37,73 @@ class BlogDataSourceImp @Inject constructor(
         query: String,
         page: Int,
         filterAndOrder: String
-    ): LiveData<DataState<BlogViewState>> {
+    ): Flow<DataState<BlogViewState>> {
         val authToken: AuthToken? = sessionManager.cashedToken.value
 
         return object :
             NetworkBoundResource<BlogSearchResponse, List<BlogPostEntity>, BlogViewState>(
-                isNetworkAvailable = sessionManager.isConnectedToInternet(),
-                isNetworkRequest = true,
-                shouldCancelIfNoInternet = false,
-                shouldLoadFromCache = true
-
+                IO,
+                apiCall = {
+                    openApiMainService.searchListBlogPost(
+                        authorization = "Token ${authToken?.token!!}",
+                        query = query,
+                        ordering = filterAndOrder,
+                        page = page
+                    )
+                },
+                cacheCall = {
+                    blogPostDao.searchBlogPostsOrderByDateDESC(
+                        query = query,
+                        page = page,
+                        pageSize = PAGINATION_PAGE_SIZE
+                    )
+                }
             ) {
-            override suspend fun createCashRequestAndReturn() {
-                withContext(Main) {
-                    result.addSource(loadFromCache()) { viewState ->
-                        viewState.blogFields.isQueryInProgress = false
-                        if (page * PAGINATION_PAGE_SIZE > viewState.blogFields.blogList.size) {
-                            viewState.blogFields.isQueryExhausted = true
-                        }
-                        onCompleteJob(DataState.data(viewState, null))
-                    }
+            override suspend fun updateCache(networkObject: BlogSearchResponse) {
+                for (blogPost in networkObject.results) {
+                    blogPostDao.insert(blogPost)
                 }
             }
 
-            override suspend fun handleApiSuccessResponse(
-                response: GenericApiResponse.ApiSuccessResponse<BlogSearchResponse>
-            ) {
-                updateLocalDb(response.body.results)
-                createCashRequestAndReturn()
-            }
-
-            override fun createCall(): LiveData<GenericApiResponse<BlogSearchResponse>> {
-                return openApiMainService.searchListBlogPost(
-                    "Token ${authToken!!.token}", query, filterAndOrder, page
+            override suspend fun handleCacheSuccess(response: List<BlogPostEntity>): DataState<BlogViewState> {
+                return DataState.SUCCESS(
+                    BlogViewState(blogFields = BlogViewState.BlogFields(response.map {
+                        BlogPostMapper.toBlogPostDomain(it)
+                    }))
                 )
             }
 
-            override fun loadFromCache(): LiveData<BlogViewState> {
-                val blogPosts = blogPostDao.returnOrderedBlogQuery(query, filterAndOrder, page)
-                return Transformations.switchMap(blogPosts) {
-                    object : LiveData<BlogViewState>() {
-                        override fun onActive() {
-                            super.onActive()
-                            value = BlogViewState(
-                                BlogViewState.BlogFields(
-                                    blogList = it.map { blogPost ->
-                                        BlogPostMapper.toBlogPostDomain(blogPost)
-
-                                    }, isQueryInProgress = true
-                                )
-                            )
-                        }
-                    }
-                }
+            override suspend fun handleNetworkSuccess(response: BlogSearchResponse): DataState<BlogViewState>? {
+                val cacheResponse = cacheCall?.invoke()
+                cacheResponse?.let {
+                    return handleCacheSuccess(it)
+                } ?: return null
             }
+        }.result
 
-            override suspend fun updateLocalDb(cacheObject: List<BlogPostEntity>?) {
-                if (cacheObject != null) {
-                    withContext(IO) {
-                        for (blogPost in cacheObject) {
-                            try {
-                                //launch each insert as a separate job tp executed in parallel
-                                launch {
-//                                    Log.d(
-//                                        "AppDebug",
-//                                        "updateLocalDb: inserting blog: $blogPost"
-//                                    )
-                                    blogPostDao.insert(blogPost)
-                                }
-
-                            } catch (e: Exception) {
-                                Log.e(
-                                    "AppDebug",
-                                    "updateLocalDb: error updating cache on " +
-                                            "blog post with slug ${blogPost.slug}"
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            override fun setJob(job: Job) {
-                addJob("searchBlogPosts", job)
-            }
-
-        }.asLiveData()
     }
 
-    override fun checkAuthorOfBlogPost(slug: String): LiveData<DataState<BlogViewState>> {
+
+    override fun checkAuthorOfBlogPost(slug: String): Flow<DataState<BlogViewState>> {
         val authToken: AuthToken? = sessionManager.cashedToken.value
 
         return object : NetworkBoundResource<GenericResponse, Void, BlogViewState>(
-            isNetworkAvailable = sessionManager.isConnectedToInternet(),
-            isNetworkRequest = true,
-            shouldCancelIfNoInternet = true,
-            shouldLoadFromCache = false
+            IO,
+            apiCall = {
+                openApiMainService.isAuthor(
+                    authorization = "Token ${authToken?.token!!}",
+                    slug = slug
+                )
+            }
         ) {
-            override suspend fun createCashRequestAndReturn() {/*NO-OPS*/
+            override suspend fun handleNetworkSuccess(response: GenericResponse): DataState<BlogViewState>? {
+                val isAuthor = response.response == RESPONSE_HAS_PERMISSION_TO_EDIT
+                return DataState.SUCCESS(
+                    BlogViewState(viewBlogFields = BlogViewState.ViewBlogFields(isAuthorOfBlogPost = isAuthor))
+                )
             }
 
-            override suspend fun handleApiSuccessResponse(response: GenericApiResponse.ApiSuccessResponse<GenericResponse>) {
-                withContext(Main) {
-                    var isAuthor = false
-                    if (response.body.response == RESPONSE_HAS_PERMISSION_TO_EDIT) {
-                        isAuthor = true
-                    }
-                    onCompleteJob(
-                        DataState.data(
-                            data = BlogViewState(
-                                viewBlogFields = BlogViewState.ViewBlogFields(
-                                    isAuthorOfBlogPost = isAuthor
-                                )
-                            ), response = null
-                        )
-                    )
-                }
-            }
-
-            override fun createCall(): LiveData<GenericApiResponse<GenericResponse>> {
-                return openApiMainService.isAuthor("Token ${authToken?.token!!}", slug)
-            }
-
-            override fun loadFromCache(): LiveData<BlogViewState> {/*NO-OPS*/
-                return AbsentLiveData.create()
-            }
-
-            override suspend fun updateLocalDb(cacheObject: Void?) {/*NO-OPS*/
-            }
-
-            override fun setJob(job: Job) {
-                addJob("searchBlogPosts", job)
-            }
-
-        }.asLiveData()
+        }.result
     }
 
     override fun updateBlogPost(
@@ -188,134 +111,93 @@ class BlogDataSourceImp @Inject constructor(
         blogTitle: String,
         blogBody: String,
         imageUri: Uri
-    ): LiveData<DataState<BlogViewState>> {
+    ): Flow<DataState<BlogViewState>> {
         val authToken: AuthToken? = sessionManager.cashedToken.value
+
+        val title = RequestBody.create(MediaType.parse("text/plain"), blogTitle)
+        val body = RequestBody.create(MediaType.parse("text/plain"), blogBody)
+
+        val imageFile = imageUri.path?.let { File(it) }
+        val imageRequestBody = imageFile?.let { RequestBody.create(MediaType.parse("image/*"), it) }
+        val image = imageRequestBody?.let {
+            MultipartBody.Part.createFormData("image", imageFile.name, it)
+        }
 
         return object :
             NetworkBoundResource<BlogCreateUpdateResponse, BlogPostEntity, BlogViewState>(
-                isNetworkAvailable = sessionManager.isConnectedToInternet(),
-                isNetworkRequest = true,
-                shouldCancelIfNoInternet = true,
-                shouldLoadFromCache = false
-            ) {
-            override suspend fun createCashRequestAndReturn() {
-                /*no-ops*/
-            }
-
-            override suspend fun handleApiSuccessResponse(response: GenericApiResponse.ApiSuccessResponse<BlogCreateUpdateResponse>) {
-                val updatedBlogPost = BlogPostEntity(
-                    response.body.pk,
-                    response.body.title,
-                    response.body.slug,
-                    response.body.body,
-                    response.body.image,
-                    response.body.date_updated,
-                    response.body.username,
-                )
-                updateLocalDb(updatedBlogPost)
-
-                withContext(Main) {
-                    onCompleteJob(
-                        DataState.data(
-                            data = BlogViewState(
-                                viewBlogFields = BlogViewState.ViewBlogFields(
-                                    BlogPostMapper.toBlogPostDomain(updatedBlogPost),
-
-                                    )
-                            ),
-                            response = Response(response.body.response, ResponseType.Toast())
-                        )
+                IO,
+                apiCall = {
+                    openApiMainService.updateBlogPost(
+                        "Token ${authToken?.token!!}",
+                        slug,
+                        title,
+                        body,
+                        image
                     )
-
                 }
-            }
-
-            override fun createCall(): LiveData<GenericApiResponse<BlogCreateUpdateResponse>> {
-                val titleRb = RequestBody.create(MediaType.parse("text/plain"), blogTitle)
-                val bodyRb = RequestBody.create(MediaType.parse("text/plain"), blogBody)
-
-                val imageFile = imageUri.path?.let { File(it) }
-                val imageRequestBody = RequestBody.create(MediaType.parse("image/*"), imageFile)
-                val imageMultipartBody =
-                    MultipartBody.Part.createFormData("image", imageFile?.name, imageRequestBody)
-                return openApiMainService.updateBlogPost(
-                    "Token ${authToken?.token!!}",
-                    slug,
-                    titleRb,
-                    bodyRb,
-                    imageMultipartBody
+            ) {
+            override suspend fun updateCache(networkObject: BlogCreateUpdateResponse) {
+                blogPostDao.updateBlogPost(
+                    networkObject.pk,
+                    networkObject.title,
+                    networkObject.body,
+                    networkObject.image
                 )
             }
 
-            override fun loadFromCache(): LiveData<BlogViewState> {
-                /*no-ops*/
-                return AbsentLiveData.create()
+            override suspend fun handleNetworkSuccess(response: BlogCreateUpdateResponse): DataState<BlogViewState>? {
+                val updatedPost = BlogPostDomain(
+                    response.pk,
+                    response.title,
+                    response.slug,
+                    response.body,
+                    response.image,
+                    response.date_updated,
+                    response.username
+                )
+                return DataState.SUCCESS(
+                    data = BlogViewState(viewBlogFields = BlogViewState.ViewBlogFields(blogPost = updatedPost))
+                )
             }
-
-            override suspend fun updateLocalDb(cacheObject: BlogPostEntity?) {
-                cacheObject?.let {
-                    blogPostDao.updateBlogPost(it.primaryKey, it.title, it.body, it.image)
-                }
-            }
-
-            override fun setJob(job: Job) {
-                addJob("updateBlogPost", job)
-            }
-
-        }.asLiveData()
+        }.result
     }
 
-    override fun deleteBlogPost(blogPost: BlogPostDomain): LiveData<DataState<BlogViewState>> {
+    override fun deleteBlogPost(blogPost: BlogPostDomain): Flow<DataState<BlogViewState>> {
         val authToken: AuthToken? = sessionManager.cashedToken.value
 
         return object : NetworkBoundResource<GenericResponse, BlogPostEntity, BlogViewState>(
-            isNetworkAvailable = sessionManager.isConnectedToInternet(),
-            isNetworkRequest = true,
-            shouldCancelIfNoInternet = true,
-            shouldLoadFromCache = false,
-        ) {
-            override suspend fun createCashRequestAndReturn() {
-                /*No-OPS*/
-            }
-
-            override suspend fun handleApiSuccessResponse(response: GenericApiResponse.ApiSuccessResponse<GenericResponse>) {
-                if (response.body.response == SUCCESS_BLOG_DELETED) {
-                    updateLocalDb(BlogPostMapper.toBlogPostData(blogPost))
-                } else {
-                    onCompleteJob(
-                        DataState.error(Response(ERROR_UNKNOWN, ResponseType.Dialog()))
-                    )
-                }
-            }
-
-            override fun createCall(): LiveData<GenericApiResponse<GenericResponse>> {
-                return openApiMainService.deleteBlogPost(
-                    "Token ${authToken?.token!!}",
-                    blogPost.slug
+            IO,
+            apiCall = {
+                openApiMainService.deleteBlogPost(
+                    authorization = "Token ${authToken?.token!!}",
+                    slug = blogPost.slug
                 )
             }
-
-            override fun loadFromCache(): LiveData<BlogViewState> {
-                /*No-OPS*/
-                return AbsentLiveData.create()
+        ) {
+            override suspend fun updateCache(networkObject: GenericResponse) {
+                blogPostDao.deleteBlogPost(BlogPostMapper.toBlogPostData(blogPost))
             }
 
-            override suspend fun updateLocalDb(cacheObject: BlogPostEntity?) {
-                cacheObject?.let {
-                    blogPostDao.deleteBlogPost(it)
-                    onCompleteJob(
-                        DataState.data(
-                            null,
-                            response = Response(SUCCESS_BLOG_DELETED, ResponseType.Toast())
+            override suspend fun handleNetworkSuccess(response: GenericResponse): DataState<BlogViewState>? {
+                val isDeleted = response.response == SUCCESS_BLOG_DELETED
+                return if (isDeleted) {
+                    DataState.ERROR(
+                        StateMessage(
+                            message = SUCCESS_BLOG_DELETED,
+                            uiComponentType = UIComponentType.TOAST,
+                            messageType = MessageType.SUCCESS
+                        )
+                    )
+                } else {
+                    DataState.ERROR(
+                        StateMessage(
+                            message = "ERROR",
+                            uiComponentType = UIComponentType.TOAST,
+                            messageType = MessageType.ERROR
                         )
                     )
                 }
             }
-
-            override fun setJob(job: Job) {
-                addJob("deleteBlogPost", job)
-            }
-
-        }.asLiveData()
+        }.result
     }
 }

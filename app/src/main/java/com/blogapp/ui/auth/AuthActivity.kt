@@ -5,15 +5,21 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import com.blogapp.R
-import com.blogapp.ui.base.BaseActivity
 import com.blogapp.ui.ViewModelProviderFactory
 import com.blogapp.ui.auth.state.AuthStateEvent
+import com.blogapp.ui.base.BaseActivity
 import com.blogapp.ui.main.MainActivity
 import com.data.models.AuthToken
+import com.domain.dataState.DataState
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class AuthActivity : BaseActivity() {
@@ -45,54 +51,44 @@ class AuthActivity : BaseActivity() {
     }
 
     private fun subscribeToObservers() {
-
-        viewModel.dataState.observe(this, { dataState ->
-            dataState.data?.let { data ->
-                data.data?.let { event ->
-                    event.getContentIfNotHandled()?.let {
-                        it.authToken?.let { token ->
-                            Log.d("AUTH_ACTIVITY", "DataState authToken: $token")
-                            viewModel.setAuthToken(token)
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                launch {
+                    viewModel.dataState.collect { dataState ->
+                        dataStateChange(dataState)
+                        when (dataState) {
+                            is DataState.SUCCESS -> {
+                                dataState.data?.let { viewState ->
+                                    Log.d(
+                                        "AppDebug",
+                                        "subscribeToObservers //view state is: ${viewState.authToken?.authToken} "
+                                    )
+                                    viewState.authToken?.let { token ->
+                                        Log.d(
+                                            "AppDebug",
+                                            "subscribeToObservers // logging in with session manager "
+                                        )
+                                        sessionManager.login(AuthToken(token.pk, token.authToken))
+                                    }
+                                }
+                            }
+                            else -> dataStateChange(dataState)
                         }
                     }
                 }
-
-//                data.response?.let { event ->
-//                    event.getContentIfNotHandled()?.let {
-//                        when (it.responseType) {
-//                            is ResponseType.Dialog -> {
-//                                Log.e("AUTH_ACTIVITY", "Response: ${it.message}")
-//                            }
-//                            is ResponseType.Toast -> {
-//                                Log.e("AUTH_ACTIVITY", "Response: ${it.message}")
-//                            }
-//                            is ResponseType.None -> {
-//                                Log.e("AUTH_ACTIVITY", "Response: ${it.message}")
-//                            }
-//                        }
-//                    }
-//
-//                }
             }
-        })
-
-        viewModel.viewState.observe(this, {
-            it.authToken?.let { authToken ->
-                val tokeData = AuthToken(authToken.pk, authToken.authToken)
-                sessionManager.login(tokeData)
-            }
-        })
+        }
 
         sessionManager.cashedToken.observe(this, { authToken ->
             Log.d("AUTH_ACTIVITY", "authToken is $authToken")
             if (authToken != null && authToken.account_primary_key != -1 && authToken.token != null) {
-                Log.d("AppDebug", "subscribeToObservers: navigation to main activity")
+                Log.d("AppDebug", "subscribeToObservers: navigating to main activity")
                 navToMainActivity()
             }
         })
     }
 
-    fun checkPrevAuthUser() {
+    private fun checkPrevAuthUser() {
         viewModel.setStateEvent(AuthStateEvent.CheckPreviousAuthEvent)
     }
 

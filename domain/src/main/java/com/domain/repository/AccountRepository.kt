@@ -2,14 +2,15 @@ package com.domain.repository
 
 import androidx.lifecycle.LiveData
 import com.domain.models.AuthTokenDomain
-import com.domain.utils.DataState
+import com.domain.dataState.DataState
 import com.domain.viewState.AccountViewState
+import kotlinx.coroutines.flow.Flow
 
 interface AccountRepository {
 
-    fun getAccountProperties(authToken: AuthTokenDomain): LiveData<DataState<AccountViewState>>
+    fun getAccountProperties(authToken: AuthTokenDomain): Flow<DataState<AccountViewState>>
 
-    fun updateAccountProperties(email: String, username: String): LiveData<DataState<AccountViewState>>
+    fun updateAccountProperties(email: String, username: String): Flow<DataState<AccountViewState>>
 
-    fun changePassword (oldPassword: String, newPassword: String, confirmNewPassword: String): LiveData<DataState<AccountViewState>>
+    fun changePassword (oldPassword: String, newPassword: String, confirmNewPassword: String): Flow<DataState<AccountViewState>>
 }

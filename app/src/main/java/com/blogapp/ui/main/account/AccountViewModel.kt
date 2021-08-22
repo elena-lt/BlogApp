@@ -1,24 +1,22 @@
 package com.blogapp.ui.main.account
 
-import android.util.Log
-import androidx.lifecycle.LiveData
 import com.blogapp.models.AccountProperties
 import com.blogapp.models.mappers.AccountPropertiesMapper
-import com.blogapp.ui.auth.state.AuthStateEvent
 import com.blogapp.ui.base.BaseViewModel
 import com.blogapp.ui.main.account.state.AccountStateEvent
 import com.blogapp.ui.main.account.state.AccountStateEvent.*
-import com.data.models.AuthToken
 import com.data.session.SessionManager
 import com.domain.models.AuthTokenDomain
 import com.domain.usecases.main.account.ChangePasswordUseCase
 import com.domain.usecases.main.account.GetAccountPropertiesUseCase
 import com.domain.usecases.main.account.UpdateAccountPropertiesUseCase
-import com.domain.utils.AbsentLiveData
-import com.domain.utils.DataState
-import com.domain.utils.Loading
+import com.domain.dataState.DataState
+import com.domain.dataState.MessageType
+import com.domain.dataState.StateMessage
+import com.domain.dataState.UIComponentType
 import com.domain.viewState.AccountViewState
-import com.domain.viewState.BlogViewState
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 
 class AccountViewModel @Inject constructor(
@@ -28,14 +26,21 @@ class AccountViewModel @Inject constructor(
     private val sessionManager: SessionManager
 ) : BaseViewModel<AccountStateEvent, AccountViewState>() {
 
-    //TODO ("create mapper: AuthToken")
-    override fun handleStateEvent(stateEvent: AccountStateEvent): LiveData<DataState<AccountViewState>> {
-        return when (stateEvent) {
+    override fun handleStateEvent(stateEvent: AccountStateEvent) {
+         when (stateEvent) {
             is GetAccountPropertiesEvent -> {
-                return sessionManager.cashedToken.value?.let { authToken -> //data.authToken
+                 sessionManager.cashedToken.value?.let { authToken -> //data.authToken
                     val token = AuthTokenDomain(authToken.account_primary_key, authToken.token)
                     getAccountPropertiesUseCase.invoke(token)
-                } ?: AbsentLiveData.create()
+                } ?: flowOf(
+                    DataState.ERROR(
+                        stateMessage = StateMessage(
+                            "null",
+                            UIComponentType.NONE,
+                            messageType = MessageType.NONE
+                        )
+                    )
+                )
 
             }
             is UpdateAccountProperties -> {
@@ -48,19 +53,22 @@ class AccountViewModel @Inject constructor(
                     stateEvent.confirmNewPassword
                 )
             }
-            is None -> {
-                object : LiveData<DataState<AccountViewState>>() {
-                    override fun onActive() {
-                        super.onActive()
-                        value = DataState(error = null, loading = Loading(false), data = null)
-                    }
-                }
+            else -> {
+                flowOf(
+                    DataState.ERROR(
+                        stateMessage = StateMessage(
+                            "null",
+                            UIComponentType.NONE,
+                            messageType = MessageType.NONE
+                        )
+                    )
+                )
             }
         }
     }
 
     fun setAccountPropertiesData(accountProperties: AccountProperties) {
-        val update = getCurrentViewStateOrNew()
+        val update = currentState
         if (update.accountProperties == AccountPropertiesMapper.toAccountPropertiesDomain(
                 accountProperties
             )
@@ -68,7 +76,6 @@ class AccountViewModel @Inject constructor(
         else {
             update.accountProperties =
                 AccountPropertiesMapper.toAccountPropertiesDomain(accountProperties)
-            _viewState.value = update
         }
     }
 
@@ -76,20 +83,7 @@ class AccountViewModel @Inject constructor(
         sessionManager.logout()
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        cancelActiveJobs()
+    override fun createInitialState(): AccountViewState {
+        return AccountViewState()
     }
-
-    fun handlePendingData(){
-        setStateEvent(None)
-    }
-
-    fun cancelActiveJobs(){
-        handlePendingData()
-        Log.d("AppDebug", "AccountViewModel // cancelActiveJobs: cancelling active jobs")
-        //repository.canceljob
-    }
-
-    override fun initNewViewState(): AccountViewState = AccountViewState()
 }

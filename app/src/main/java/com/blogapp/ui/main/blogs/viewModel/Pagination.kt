@@ -5,7 +5,7 @@ import com.blogapp.ui.main.blogs.state.BlogStateEvent
 import com.domain.viewState.BlogViewState
 
 fun BlogViewModel.resetPage() {
-    val update = getCurrentViewStateOrNew()
+    val update = currentState
     update.blogFields.page = 1
     setViewState(update)
 }
@@ -18,7 +18,7 @@ fun BlogViewModel.loadFirstPage() {
 }
 
 fun BlogViewModel.incrementPageNumber() {
-    val update = getCurrentViewStateOrNew()
+    val update = currentState
     val page = update.copy().blogFields.page
     update.blogFields.page = page + 1
     setViewState(update)

@@ -1,15 +1,15 @@
 package com.blogapp.ui.main.account
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
-import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.viewbinding.ViewBinding
 import com.blogapp.R
 import com.blogapp.databinding.FragmentUpdateAccountBinding
 import com.blogapp.models.AccountProperties
 import com.blogapp.models.mappers.AccountPropertiesMapper
 import com.blogapp.ui.main.account.state.AccountStateEvent
+import kotlinx.coroutines.flow.collect
 
 class UpdateAccountFragment : BaseAccountFragment<FragmentUpdateAccountBinding>() {
 
@@ -24,19 +24,22 @@ class UpdateAccountFragment : BaseAccountFragment<FragmentUpdateAccountBinding>(
     }
 
     private fun subscribeToObservers() {
-        viewModel.dataState.observe(viewLifecycleOwner, { dataState ->
-            stateChangeListener.dataStateChange(dataState)
-            Log.d(TAG, "UpdateAccount: DataState: $dataState")
-        })
 
-        viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
-            viewState?.let {
-                viewState.accountProperties?.let {
-                    Log.d(TAG, "UpdateAccount: VieState: $it")
-                    setAccountProperties(AccountPropertiesMapper.toAccountProperties(it))
+        viewLifecycleOwner.lifecycleScope.launchWhenResumed {
+            viewModel.dataState.collect { dataState ->
+                stateChangeListener.dataStateChange(dataState)
+            }
+
+            viewModel.viewState.collect {
+                it.accountProperties?.let { accountProperties ->
+                    setAccountProperties(
+                        AccountPropertiesMapper.toAccountProperties(
+                            accountProperties
+                        )
+                    )
                 }
             }
-        })
+        }
     }
 
     private fun setAccountProperties(accountProperties: AccountProperties) {

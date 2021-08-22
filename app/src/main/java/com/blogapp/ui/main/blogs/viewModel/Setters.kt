@@ -1,19 +1,21 @@
 package com.blogapp.ui.main.blogs.viewModel
 
 import android.net.Uri
+import android.util.Log
 import com.blogapp.models.BlogPost
 import com.blogapp.models.mappers.BlogPostMapper
 import com.domain.models.BlogPostDomain
+import com.domain.viewState.BlogViewState
 
 fun BlogViewModel.setQuery(query: String) {
-    val update = getCurrentViewStateOrNew()
+    val update = currentState
     if (query == update.blogFields.searchQuery) return
     update.blogFields.searchQuery = query
     setViewState(update)
 }
 
 fun BlogViewModel.setBlogList(blogList: List<BlogPost>) {
-    val update = getCurrentViewStateOrNew()
+    val update = currentState
     update.blogFields.blogList = blogList.map {
         BlogPostMapper.toBlogPostDomain(it)
     }
@@ -21,32 +23,32 @@ fun BlogViewModel.setBlogList(blogList: List<BlogPost>) {
 }
 
 fun BlogViewModel.setBlogPost(blogPost: BlogPostDomain) {
-    val update = getCurrentViewStateOrNew()
+    val update = currentState
     update.viewBlogFields.blogPost = blogPost
     setViewState(update)
 }
 
 fun BlogViewModel.setAuthorOfBlogPost(isAuthorOfBlogPost: Boolean) {
-    val update = getCurrentViewStateOrNew()
+    val update = currentState
     update.viewBlogFields.isAuthorOfBlogPost = isAuthorOfBlogPost
     setViewState(update)
 }
 
 fun BlogViewModel.setQueryExhausted(isQueryExhausted: Boolean) {
-    val update = getCurrentViewStateOrNew()
+    val update = currentState
     update.blogFields.isQueryExhausted = isQueryExhausted
     setViewState(update)
 }
 
 fun BlogViewModel.setQueryInProgress(isQueryInProgress: Boolean) {
-    val update = getCurrentViewStateOrNew()
+    val update = currentState
     update.blogFields.isQueryInProgress = isQueryInProgress
     setViewState(update)
 }
 
 fun BlogViewModel.setFilter(filter: String?) {
     filter?.let {
-        val update = getCurrentViewStateOrNew()
+        val update = currentState
         update.blogFields.filter = filter
         setViewState(update)
     }
@@ -54,20 +56,24 @@ fun BlogViewModel.setFilter(filter: String?) {
 
 fun BlogViewModel.setOrder(order: String?) {
     order?.let {
-        val update = getCurrentViewStateOrNew()
+        val update = currentState
         update.blogFields.order = order
         setViewState(update)
     }
 }
 
 fun BlogViewModel.setIsAuthorOfBlogPost(isAuthor: Boolean) {
-    val update = getCurrentViewStateOrNew()
-    update.viewBlogFields.isAuthorOfBlogPost = isAuthor
+    val update = currentState.copy(
+        viewBlogFields = BlogViewState.ViewBlogFields(
+            getBlogPost(),
+            isAuthorOfBlogPost = isAuthor
+        )
+    )
     setViewState(update)
 }
 
 fun BlogViewModel.removeDeletedBlogPost() {
-    val update = getCurrentViewStateOrNew()
+    val update = currentState
     val list = update.blogFields.blogList.toMutableList()
     for (i in 0 until list.size) {
         if (list[i] == getBlogPost()) {
@@ -85,7 +91,7 @@ fun BlogViewModel.setUpdatedBlogFields(
     body: String?,
     imageUri: Uri?
 ) {
-    val update = getCurrentViewStateOrNew()
+    val update = currentState
     val updatedBlogFields = update.updateBlogFields
     title?.let { updatedBlogFields.blogTitle = it }
     body?.let { updatedBlogFields.blogBody = it }
@@ -95,7 +101,7 @@ fun BlogViewModel.setUpdatedBlogFields(
 }
 
 fun BlogViewModel.updateListItem(newBlogPost: BlogPostDomain) {
-    val update = getCurrentViewStateOrNew()
+    val update = currentState
     val list = update.blogFields.blogList.toMutableList()
     for (i in 0 until list.size) {
         if (list[i].primaryKey == getBlogPost().primaryKey) {

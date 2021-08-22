@@ -1,5 +1,6 @@
 package com.blogapp.ui.main.createPost
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
@@ -7,17 +8,27 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.view.*
-import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.viewbinding.ViewBinding
 import com.blogapp.R
 import com.blogapp.databinding.FragmentCreateNewBlogBinding
 import com.blogapp.ui.main.createPost.state.CreateBlogStateEvent
 import com.blogapp.utils.Const.GALLERY_REQUEST_CODE
 import com.blogapp.utils.Const.SUCCESS_BLOG_CREATED
+import com.domain.dataState.DataState
+import com.domain.dataState.MessageType
+import com.domain.dataState.StateMessage
+import com.domain.dataState.UIComponentType
 import com.domain.utils.*
 import com.theartofdev.edmodo.cropper.CropImage
 import com.theartofdev.edmodo.cropper.CropImageView
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
+@SuppressLint("UnsafeRepeatOnLifecycleDetector")
 class CreateNewBlogFragment : BaseCreateBlogFragment<FragmentCreateNewBlogBinding>() {
 
     override val bindingInflater: (LayoutInflater) -> ViewBinding
@@ -56,33 +67,38 @@ class CreateNewBlogFragment : BaseCreateBlogFragment<FragmentCreateNewBlogBindin
     }
 
     private fun subscribeToObservers() {
-        viewModel.dataState.observe(viewLifecycleOwner, { dataState ->
-            dataState?.let {
-                stateChangeListener.dataStateChange(dataState)
-                dataState.data?.let{data ->
-                    data.response?.let{event ->
-                        event.peekContent().let { response ->
-                            response.message?.let{msg ->
-                                if (msg == SUCCESS_BLOG_CREATED){
-                                    viewModel.clearNewBlogFields()
-                                }
 
+        viewLifecycleOwner.lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                launch {
+                    viewModel.dataState.collect { dataState ->
+                        stateChangeListener.dataStateChange(dataState)
+                        when (dataState) {
+                            is DataState.SUCCESS, is DataState.ERROR -> {
+                                dataState.stateMessage?.let { stateMessage ->
+                                    stateMessage.message?.let { msg ->
+                                        if (msg == SUCCESS_BLOG_CREATED) {
+                                            viewModel.clearNewBlogFields()
+                                            findNavController().popBackStack()
+                                        }else{
+                                            Log.d(TAG, "subscribeToObservers: some error occurred: $msg")
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
-            }
-        })
 
-        viewModel.viewState.observe(viewLifecycleOwner, { viewState ->
-            viewState.newBlogFields.let { newBlogFields ->
-                setBlogProperties(
-                    newBlogFields.newBlogTitle,
-                    newBlogFields.newBlogBody,
-                    newBlogFields.newBlogImageUri
-                )
+                launch {
+                    viewModel.viewState.collect{viewState ->
+                        viewState.newBlogFields.let {
+                            setBlogProperties(it.newBlogTitle, it.newBlogBody, it.newBlogImageUri)
+                        }
+                    }
+                }
             }
-        })
+        }
     }
 
     private fun publishNewBlog() {
@@ -131,10 +147,12 @@ class CreateNewBlogFragment : BaseCreateBlogFragment<FragmentCreateNewBlogBindin
 
     private fun showErrorDialog(errorMsg: String) {
         stateChangeListener.dataStateChange(
-            DataState(
-                Event(StateError(Response(errorMsg, ResponseType.Dialog()))),
-                Loading(false),
-                Data(Event.dataEvent(null), null)
+            DataState.ERROR<CreateBlogStateEvent>(
+                stateMessage = StateMessage(
+                    message = errorMsg,
+                    uiComponentType = UIComponentType.DIALOG,
+                    messageType = MessageType.ERROR
+                )
             )
         )
     }
